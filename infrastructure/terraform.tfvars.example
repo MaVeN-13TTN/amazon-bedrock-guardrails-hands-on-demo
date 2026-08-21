@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars and adjust. Every value here has a working default.
+
+aws_region = "eu-west-1"
+project    = "kilimo-desk"
+
+# eu-west-1 requires a cross-Region inference profile: note the `eu.` prefix.
+bedrock_model_id = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+
+# Flip to "CLASSIC" and re-apply to demonstrate the tier gap live.
+guardrail_tier       = "STANDARD"
+guardrail_profile_id = "eu.guardrail.v1:0"
+
+# Cost guard on an unauthenticated endpoint.
+api_throttling_rate_limit  = 10
+api_throttling_burst_limit = 20
+
+# Optional: connect a Git repo for Amplify CI builds instead of manual deploys.
+# amplify_repository_url = "https://github.com/<you>/<repo>"
+# amplify_access_token   = "ghp_..."

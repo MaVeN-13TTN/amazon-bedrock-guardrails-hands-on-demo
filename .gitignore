@@ -1,0 +1,31 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+backend/build/
+backend/dist/
+backend/.env
+
+# node
+node_modules/
+.next/
+out/
+next-env.d.ts
+frontend/.env.local
+frontend/deploy.zip
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+crash.log
+
+# misc
+.DS_Store
+.ruff_cache/
+*.tsbuildinfo
+.pytest_cache/

@@ -1,0 +1,77 @@
+{
+  "_comment": "Single source of truth for the demo scenario and guardrail policy. Read by Terraform (jsondecode) to build the guardrail, and by the FastAPI backend at runtime. Editing this file changes both — there is no second copy to keep in step.",
+
+  "org": "Highland Growers Co-operative",
+  "assistant": "Kilimo Desk",
+  "county": "Murang'a County",
+  "guardrail_name": "kilimo-desk-member-support",
+
+  "system_prompt": "You are Kilimo Desk, the member-support assistant for Highland Growers Co-operative, a smallholder farming co-operative in Murang'a County, Kenya.\n\nWhat you help with:\n- Co-operative membership, produce collection schedules, and payment cycles.\n- General agronomic guidance, grounded in the co-operative's extension bulletins.\n\nHard boundaries:\n- Never state a quantity, concentration, mixing ratio, or dosage for any agrochemical or veterinary medicine. Refer the member to a licensed agrovet.\n- Never advise on land ownership, title deeds, succession, or boundary disputes.\n- Never promise credit approval, interest rates, or repayment terms.\n\nKeep answers under 120 words, in plain language that reads well on a feature phone.\n",
+
+  "extension_bulletin": "Highland Growers Co-operative - Extension Bulletin 14 (March 2026)\n\nPotato late blight: scout fields twice weekly from the fourth week after emergence. Remove and bury volunteer plants between rows. Certified seed issued from the co-operative store is already treated before collection.\n\nCollection points at Kangema and Kiriaini open from 06:00 to 10:00 on Tuesdays and Fridays only. Members must present a valid member number at the gate.\n\nPayment for delivered produce is released fourteen days after grading is complete. Grading results are posted at the collection point.\n",
+
+  "blocked_input_message": "I can't help with that one. For anything involving chemical doses, land matters, or credit decisions, please speak to the co-operative office or a licensed agrovet.",
+  "blocked_output_message": "I started to answer that but the response didn't meet our member-safety rules. Please contact the co-operative office.",
+
+  "denied_topics": [
+    {
+      "name": "Agrochemical Dosing",
+      "definition": "Specifying quantities, concentrations, mixing ratios, or application rates for pesticides, herbicides, fungicides, fertilisers, or veterinary medicines.",
+      "examples": [
+        "How many millilitres of fungicide per 20 litre knapsack?",
+        "What dose of antibiotic should I give a sick calf?",
+        "How much urea per acre for maize at planting?"
+      ]
+    },
+    {
+      "name": "Land Tenure Disputes",
+      "definition": "Advice on land ownership, title deeds, succession, or boundary disagreements between neighbours or family members.",
+      "examples": [
+        "My neighbour moved the boundary beacon, can I take him to court?",
+        "Who inherits the shamba if my father left no will?"
+      ]
+    },
+    {
+      "name": "Credit Terms",
+      "definition": "Promising loan approval, quoting interest rates or repayment schedules, or guaranteeing any credit outcome for a member.",
+      "examples": [
+        "Will the co-operative approve my loan application?",
+        "What interest rate will I be charged on an input advance?"
+      ]
+    }
+  ],
+
+  "content_filters": [
+    { "type": "HATE",          "input_strength": "HIGH", "output_strength": "HIGH" },
+    { "type": "INSULTS",       "input_strength": "HIGH", "output_strength": "HIGH" },
+    { "type": "SEXUAL",        "input_strength": "HIGH", "output_strength": "HIGH" },
+    { "type": "VIOLENCE",      "input_strength": "HIGH", "output_strength": "HIGH" },
+    { "type": "MISCONDUCT",    "input_strength": "HIGH", "output_strength": "HIGH" },
+    { "type": "PROMPT_ATTACK", "input_strength": "HIGH", "output_strength": "NONE" }
+  ],
+
+  "blocked_words": ["Project Tumaini", "Batch Ledger v2"],
+
+  "pii_entities": [
+    { "type": "PHONE", "action": "ANONYMIZE" },
+    { "type": "NAME",  "action": "ANONYMIZE" }
+  ],
+
+  "pii_regexes": [
+    {
+      "name": "Co-op Member Number",
+      "description": "Highland Growers member number, e.g. HG-004182",
+      "pattern": "HG-[0-9]{6}",
+      "action": "ANONYMIZE"
+    },
+    {
+      "name": "National ID",
+      "description": "Kenyan national ID, eight digits",
+      "pattern": "\\b[0-9]{8}\\b",
+      "action": "ANONYMIZE"
+    }
+  ],
+
+  "grounding_threshold": 0.7,
+  "relevance_threshold": 0.7
+}
