@@ -31,6 +31,10 @@ crash.log
 .pytest_cache/
 .hypothesis/
 
+# Kiro spec workspace — requirements, design and task tracking for the build.
+# Working notes, not part of what the repository teaches.
+.kiro/
+
 # playwright
 frontend/test-results/
 frontend/playwright-report/
