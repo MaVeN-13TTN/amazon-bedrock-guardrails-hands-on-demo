@@ -1,0 +1,29 @@
+{
+  "_comment": "Answer-stage fallback for when the model is unreachable. Each entry carries a canned answer drawn strictly from Extension Bulletin 14, so the verify stage still has something grounded to check. This is NOT a model response and is labelled as such in the Background_View and the disclosure bar. See docs/validation-log.md V-12: an organisation SCP denies bedrock:InvokeModel in this account, so the answer stage cannot run live.",
+
+  "captured_utc": "2026-08-22",
+  "region": "eu-west-1",
+  "tier": "STANDARD",
+  "guardrail_version": "DRAFT",
+
+  "answers": [
+    {
+      "match": ["collection point", "collection points open", "when are the collection"],
+      "text": "The Kangema and Kiriaini collection points are open from 06:00 to 10:00, on Tuesdays and Fridays only. Please bring your member number to the gate."
+    },
+    {
+      "match": ["how long after grading", "get paid", "payment", "paid"],
+      "text": "Payment for delivered produce is released fourteen days after grading is complete. Grading results are posted at the collection point."
+    },
+    {
+      "match": ["scout", "late blight", "blight"],
+      "text": "Scout your fields twice weekly from the fourth week after emergence. Remove and bury any volunteer plants between the rows."
+    },
+    {
+      "match": ["seed", "treated"],
+      "text": "Certified seed issued from the co-operative store is already treated before you collect it."
+    }
+  ],
+
+  "default": "I can help with collection days, payment cycles, and growing guidance from our extension bulletins. Could you tell me a little more about what you need?"
+}

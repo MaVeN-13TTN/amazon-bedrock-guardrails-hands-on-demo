@@ -1,169 +1,164 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 780" width="1400" height="780" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
-  <title>Kilimo Desk — Bedrock Guardrails demo architecture</title>
-  <desc>The browser loads a static Next.js app from Amplify Hosting, then calls an
-  HTTP API directly. A FastAPI Lambda runs a three-stage guardrail pipeline against
-  Amazon Bedrock: stages one and three call ApplyGuardrail and invoke no foundation
-  model; only stage two, using Converse, reaches the model.</desc>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 620" font-family="ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <defs>
-    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#5c6b78"/>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0.5 L8 4.5 L0 8.5 z" fill="#5a675e"/>
     </marker>
-    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#2f7d4f"/>
+    <marker id="ag" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0.5 L8 4.5 L0 8.5 z" fill="#2f7d4f"/>
     </marker>
-    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#2b5f9e"/>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0.5 L8 4.5 L0 8.5 z" fill="#b3352c"/>
     </marker>
-    <style>
-      .t   { font-size:15px; font-weight:650; fill:#16211c }
-      .t2  { font-size:13px; font-weight:700; fill:#16211c }
-      .s   { font-size:11.5px; fill:#5c6b78 }
-      .m   { font-size:11px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; fill:#5c6b78 }
-      .mg  { font-size:10.5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; fill:#2f7d4f; font-weight:600 }
-      .mb  { font-size:10.5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; fill:#2b5f9e; font-weight:600 }
-      .hdr { font-size:10.5px; font-weight:700; letter-spacing:.09em; fill:#8a97a3 }
-      .num { font-size:14px; font-weight:800; fill:#fff }
-      .box { fill:#fff; stroke:#dce4dd; stroke-width:1.5 }
-    </style>
   </defs>
 
-  <rect width="1400" height="780" fill="#fdfefd"/>
+  <rect width="1180" height="620" fill="#f5f7f4"/>
 
-  <text x="40" y="44" style="font-size:22px;font-weight:700;fill:#16211c">Kilimo Desk — Bedrock Guardrails as a three-stage pipeline</text>
-  <text x="40" y="67" class="s">Highland Growers Co-operative, Murang'a County · single environment · eu-west-1 · provisioned end-to-end by Terraform</text>
+  <text x="32" y="38" font-size="19" font-weight="700" fill="#16211c">Kilimo Desk — Bedrock Guardrails as a three-stage pipeline</text>
+  <text x="32" y="60" font-size="13" fill="#5a675e">One request, rendered twice. Two of three stages never invoke a foundation model.</text>
 
-  <!-- legend -->
-  <rect x="40" y="105" width="196" height="126" rx="10" class="box"/>
-  <text x="58" y="129" class="hdr">LEGEND</text>
-  <circle cx="68" cy="154" r="7" fill="#2f7d4f"/>
-  <text x="84" y="159" class="s">no model invoked</text>
-  <circle cx="68" cy="182" r="7" fill="#2b5f9e"/>
-  <text x="84" y="187" class="s">model invoked</text>
-  <text x="58" y="215" class="s">2 of 3 stages need no model</text>
+  <!-- ================= browser / two views ================= -->
+  <rect x="32" y="86" width="286" height="330" rx="10" fill="#fff" stroke="#dce4dd" stroke-width="1.5"/>
+  <text x="48" y="110" font-size="12" font-weight="700" fill="#5a675e">BROWSER — static export, no server code</text>
 
-  <!-- region zone -->
-  <rect x="252" y="105" width="1108" height="500" rx="12" fill="#f7f9f7" stroke="#e3eae4" stroke-width="1.5" stroke-dasharray="5 4"/>
-  <text x="270" y="127" class="hdr">AWS · EU-WEST-1 (IRELAND)</text>
+  <!-- member view -->
+  <rect x="48" y="124" width="254" height="118" rx="8" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="1.5"/>
+  <text x="60" y="145" font-size="13" font-weight="700" fill="#2f7d4f">Member_View</text>
+  <text x="60" y="163" font-size="11" fill="#16211c">Landing_Page + Chat_Window</text>
+  <text x="60" y="182" font-size="11" fill="#5a675e">the answer or the refusal —</text>
+  <text x="60" y="197" font-size="11" fill="#5a675e">and nothing else</text>
+  <text x="60" y="220" font-size="10.5" font-style="italic" fill="#2f7d4f">no policy names · no scores</text>
+  <text x="60" y="234" font-size="10.5" font-style="italic" fill="#2f7d4f">no stage names · no latency</text>
 
-  <!-- browser -->
-  <rect x="40" y="272" width="196" height="112" rx="10" class="box"/>
-  <text x="60" y="304" class="t">Member</text>
-  <text x="60" y="324" class="s">browser</text>
-  <text x="60" y="348" class="m">Next.js 15</text>
-  <text x="60" y="366" class="m">static export</text>
+  <!-- background view -->
+  <rect x="48" y="254" width="254" height="82" rx="8" fill="#eff6ff" stroke="#2b5f9e" stroke-width="1.5"/>
+  <text x="60" y="275" font-size="13" font-weight="700" fill="#2b5f9e">Background_View</text>
+  <text x="60" y="293" font-size="11" fill="#16211c">the same response, unpacked</text>
+  <text x="60" y="311" font-size="10.5" fill="#5a675e">per-stage findings · model-invoked</text>
+  <text x="60" y="325" font-size="10.5" fill="#5a675e">flag · latency · raw assessment</text>
 
-  <!-- browser -> amplify (loads the app) -->
-  <path d="M236 300 C 262 300, 254 214, 288 210" stroke="#5c6b78" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+  <!-- grounding tool -->
+  <rect x="48" y="348" width="254" height="52" rx="8" fill="#eff6ff" stroke="#2b5f9e" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="60" y="368" font-size="12" font-weight="700" fill="#2b5f9e">Grounding_Tool</text>
+  <text x="60" y="386" font-size="10.5" fill="#5a675e">POST /api/verify direct — engineer</text>
 
-  <!-- browser -> api (calls it directly) -->
-  <path d="M236 356 H 288" stroke="#5c6b78" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
-  <text x="42" y="410" class="s">loads the app from Amplify,</text>
-  <text x="42" y="427" class="s">then calls the API directly</text>
-  <text x="42" y="444" class="m">CORS allow-list</text>
+  <text x="48" y="410" font-size="10" fill="#5a675e">one POST /api/ask → both views read one response</text>
 
-  <!-- amplify -->
-  <rect x="292" y="152" width="192" height="114" rx="10" class="box"/>
-  <text x="312" y="184" class="t">Amplify Hosting</text>
-  <text x="312" y="203" class="s">CDN + TLS · no SSR</text>
-  <text x="312" y="227" class="m">out/ static bundle</text>
-  <text x="312" y="245" class="m">branch: main</text>
+  <!-- ================= API ================= -->
+  <rect x="352" y="150" width="150" height="120" rx="10" fill="#fff" stroke="#dce4dd" stroke-width="1.5"/>
+  <text x="368" y="174" font-size="12" font-weight="700" fill="#5a675e">API</text>
+  <text x="368" y="196" font-size="11.5" fill="#16211c">API Gateway</text>
+  <text x="368" y="212" font-size="11.5" fill="#16211c">HTTP API</text>
+  <text x="368" y="234" font-size="11.5" fill="#16211c">Lambda · FastAPI</text>
+  <text x="368" y="250" font-size="10.5" fill="#5a675e">via Mangum</text>
+  <text x="368" y="264" font-size="10" fill="#b3352c">no authentication</text>
 
-  <!-- api gateway -->
-  <rect x="292" y="302" width="192" height="114" rx="10" class="box"/>
-  <text x="312" y="334" class="t">API Gateway</text>
-  <text x="312" y="353" class="s">HTTP API</text>
-  <text x="312" y="377" class="m">payload format 2.0</text>
-  <text x="312" y="395" class="m">10 rps · 20 burst</text>
+  <line x1="318" y1="200" x2="346" y2="200" stroke="#5a675e" stroke-width="1.6" marker-end="url(#a)"/>
 
-  <path d="M484 359 H 528" stroke="#5c6b78" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+  <!-- ================= pipeline ================= -->
+  <rect x="540" y="86" width="410" height="330" rx="10" fill="#fff" stroke="#dce4dd" stroke-width="1.5"/>
+  <text x="556" y="110" font-size="12" font-weight="700" fill="#5a675e">THE PIPELINE — bedrock-runtime</text>
 
-  <!-- lambda -->
-  <rect x="532" y="140" width="196" height="330" rx="10" class="box"/>
-  <text x="552" y="172" class="t">Lambda</text>
-  <text x="552" y="191" class="s">FastAPI via Mangum</text>
-  <text x="552" y="213" class="m">python3.12 · arm64</text>
-  <text x="552" y="229" class="m">512 MB · 60 s</text>
+  <!-- stage 1 -->
+  <rect x="556" y="124" width="378" height="76" rx="8" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="1.5"/>
+  <text x="570" y="145" font-size="13" font-weight="700" fill="#16211c">1 · Screen</text>
+  <text x="570" y="163" font-size="11" font-family="ui-monospace,Menlo,monospace" fill="#16211c">ApplyGuardrail(source=INPUT, outputScope=FULL)</text>
+  <text x="570" y="181" font-size="11" font-weight="700" fill="#2f7d4f">no model invoked</text>
+  <text x="700" y="181" font-size="10.5" fill="#5a675e">denied topics · filters · words · PII</text>
+  <text x="570" y="195" font-size="10" fill="#5a675e">blocks, or masks and forwards rewritten text</text>
 
-  <rect x="548" y="240" width="164" height="62" rx="8" fill="#eef7f1" stroke="#bcdcc7" stroke-width="1.2"/>
-  <circle cx="568" cy="262" r="10" fill="#2f7d4f"/>
-  <text x="568" y="267" class="num" text-anchor="middle">1</text>
-  <text x="586" y="267" class="t2" fill="#2f7d4f">Screen</text>
-  <text x="560" y="289" class="mg">ApplyGuardrail · no model</text>
+  <!-- stage 2 -->
+  <rect x="556" y="212" width="378" height="76" rx="8" fill="#fffbeb" stroke="#96660f" stroke-width="1.5"/>
+  <text x="570" y="233" font-size="13" font-weight="700" fill="#16211c">2 · Answer</text>
+  <text x="570" y="251" font-size="11" font-family="ui-monospace,Menlo,monospace" fill="#16211c">Converse + guardrailConfig(trace=enabled)</text>
+  <text x="570" y="269" font-size="11" font-weight="700" fill="#96660f">model invoked</text>
+  <text x="700" y="269" font-size="10.5" fill="#5a675e">guardContent wraps only the user span</text>
+  <text x="570" y="283" font-size="10" fill="#5a675e">falls back to a labelled canned answer if unavailable</text>
 
-  <rect x="548" y="310" width="164" height="62" rx="8" fill="#eef3fa" stroke="#c2d5ea" stroke-width="1.2"/>
-  <circle cx="568" cy="332" r="10" fill="#2b5f9e"/>
-  <text x="568" y="337" class="num" text-anchor="middle">2</text>
-  <text x="586" y="337" class="t2" fill="#2b5f9e">Answer</text>
-  <text x="560" y="359" class="mb">Converse · invokes model</text>
+  <!-- stage 3 -->
+  <rect x="556" y="300" width="378" height="76" rx="8" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="1.5"/>
+  <text x="570" y="321" font-size="13" font-weight="700" fill="#16211c">3 · Verify</text>
+  <text x="570" y="339" font-size="11" font-family="ui-monospace,Menlo,monospace" fill="#16211c">ApplyGuardrail(source=OUTPUT)</text>
+  <text x="570" y="357" font-size="11" font-weight="700" fill="#2f7d4f">no model invoked</text>
+  <text x="700" y="357" font-size="10.5" fill="#5a675e">grounding ≥ 0.7 · relevance ≥ 0.7</text>
+  <text x="570" y="371" font-size="10" fill="#5a675e">reference document supplied inline — no knowledge base</text>
 
-  <rect x="548" y="380" width="164" height="62" rx="8" fill="#eef7f1" stroke="#bcdcc7" stroke-width="1.2"/>
-  <circle cx="568" cy="402" r="10" fill="#2f7d4f"/>
-  <text x="568" y="407" class="num" text-anchor="middle">3</text>
-  <text x="586" y="407" class="t2" fill="#2f7d4f">Verify</text>
-  <text x="560" y="429" class="mg">ApplyGuardrail · no model</text>
+  <text x="556" y="398" font-size="10.5" fill="#b3352c">A block at stage 1 halts the request: stages 2 and 3 never run, and cost nothing.</text>
 
-  <!-- bedrock zone -->
-  <rect x="770" y="152" width="570" height="322" rx="12" fill="#fbfdfb" stroke="#dce4dd" stroke-width="1.5"/>
-  <text x="790" y="176" class="hdr">AMAZON BEDROCK</text>
+  <line x1="502" y1="180" x2="550" y2="160" stroke="#5a675e" stroke-width="1.6" marker-end="url(#a)"/>
+  <line x1="745" y1="200" x2="745" y2="208" stroke="#5a675e" stroke-width="1.6" marker-end="url(#a)"/>
+  <line x1="745" y1="288" x2="745" y2="296" stroke="#5a675e" stroke-width="1.6" marker-end="url(#a)"/>
 
-  <!-- guardrail bar: every stage talks to it -->
-  <rect x="792" y="192" width="164" height="262" rx="9" fill="#f4faf6" stroke="#bcdcc7" stroke-width="1.4"/>
-  <text x="810" y="217" class="t2" fill="#2f7d4f">Guardrail</text>
-  <text x="810" y="235" class="s">independent policy engine</text>
-  <text x="810" y="262" class="m">content filters ×6</text>
-  <text x="810" y="281" class="m">denied topics ×3</text>
-  <text x="810" y="300" class="m">word filters</text>
-  <text x="810" y="319" class="m">PII + custom regex</text>
-  <text x="810" y="338" class="m">contextual grounding</text>
-  <text x="810" y="366" class="mg">STANDARD tier</text>
-  <text x="810" y="383" class="mg">cross-Region profile</text>
-  <text x="810" y="415" class="s">DRAFT + pinned version</text>
-  <text x="810" y="438" class="m">eu.guardrail.v1:0</text>
+  <!-- ================= guardrail resource ================= -->
+  <rect x="978" y="124" width="170" height="252" rx="10" fill="#fff" stroke="#2b5f9e" stroke-width="2"/>
+  <text x="992" y="147" font-size="12" font-weight="700" fill="#2b5f9e">GUARDRAIL</text>
+  <text x="992" y="163" font-size="10" fill="#5a675e">one resource, 5 policies</text>
 
-  <!-- three arrows in, no crossings -->
-  <path d="M728 262 C 758 262, 762 246, 792 246" stroke="#2f7d4f" stroke-width="1.8" fill="none" marker-end="url(#ag)"/>
-  <path d="M728 332 H 792" stroke="#2b5f9e" stroke-width="1.8" fill="none" marker-end="url(#ab)"/>
-  <path d="M728 402 C 758 402, 762 412, 792 412" stroke="#2f7d4f" stroke-width="1.8" fill="none" marker-end="url(#ag)"/>
+  <text x="992" y="188" font-size="10.5" fill="#16211c">▪ 3 denied topics</text>
+  <text x="992" y="206" font-size="10.5" fill="#16211c">▪ 6 content filters in</text>
+  <text x="1002" y="220" font-size="10" fill="#5a675e">5 out — PROMPT_ATTACK</text>
+  <text x="1002" y="232" font-size="10" fill="#5a675e">is input-only</text>
+  <text x="992" y="250" font-size="10.5" fill="#16211c">▪ 2 words + profanity</text>
+  <text x="992" y="268" font-size="10.5" fill="#16211c">▪ 2 PII + 2 regexes</text>
+  <text x="1002" y="282" font-size="10" fill="#5a675e">ANONYMIZE on input</text>
+  <text x="992" y="300" font-size="10.5" fill="#16211c">▪ grounding + relevance</text>
 
-  <!-- guardrail -> model: only stage 2 continues through -->
-  <path d="M956 332 H 1010" stroke="#2b5f9e" stroke-width="1.8" fill="none" marker-end="url(#ab)"/>
+  <text x="992" y="326" font-size="10" fill="#5a675e">tier: CLASSIC | STANDARD</text>
+  <text x="992" y="340" font-size="10" fill="#5a675e">version: DRAFT | pinned</text>
+  <text x="992" y="360" font-size="9.5" font-style="italic" fill="#2b5f9e">billed per 1,000 text units,</text>
+  <text x="992" y="371" font-size="9.5" font-style="italic" fill="#2b5f9e">per policy enabled</text>
 
-  <!-- model -->
-  <rect x="1014" y="272" width="164" height="122" rx="9" fill="#f3f7fc" stroke="#c2d5ea" stroke-width="1.4"/>
-  <text x="1032" y="298" class="t2" fill="#2b5f9e">Claude Haiku 4.5</text>
-  <text x="1032" y="317" class="s">foundation model</text>
-  <text x="1032" y="342" class="mb">eu. inference profile</text>
-  <text x="1032" y="359" class="s">required in eu-west-1:</text>
-  <text x="1032" y="375" class="m">a bare model id 400s</text>
+  <line x1="938" y1="162" x2="972" y2="180" stroke="#2b5f9e" stroke-width="1.4" marker-end="url(#a)"/>
+  <line x1="938" y1="250" x2="972" y2="250" stroke="#2b5f9e" stroke-width="1.4" marker-end="url(#a)"/>
+  <line x1="938" y1="338" x2="972" y2="320" stroke="#2b5f9e" stroke-width="1.4" marker-end="url(#a)"/>
 
-  <text x="1200" y="300" class="s">Stage 2 is the only</text>
-  <text x="1200" y="318" class="s">path to the model.</text>
-  <text x="1200" y="342" class="s">A request rejected</text>
-  <text x="1200" y="360" class="s">at stage 1 costs no</text>
-  <text x="1200" y="378" class="s">inference at all.</text>
+  <!-- ================= source of truth ================= -->
+  <rect x="352" y="300" width="150" height="76" rx="10" fill="#fff" stroke="#dce4dd" stroke-width="1.5"/>
+  <text x="366" y="322" font-size="11" font-weight="700" fill="#5a675e">ONE DEFINITION</text>
+  <text x="366" y="340" font-size="10.5" font-family="ui-monospace,Menlo,monospace" fill="#16211c">shared/</text>
+  <text x="366" y="354" font-size="10.5" font-family="ui-monospace,Menlo,monospace" fill="#16211c">scenario.json</text>
+  <text x="366" y="370" font-size="9.5" fill="#5a675e">Terraform + app read it</text>
 
-  <!-- observability + iam -->
-  <rect x="532" y="500" width="326" height="82" rx="10" class="box"/>
-  <text x="552" y="528" class="t">CloudWatch · X-Ray</text>
-  <text x="552" y="550" class="m">guardrail trace JSON · access logs</text>
-  <text x="552" y="568" class="m">alarms: errors + throttles</text>
-  <path d="M628 470 V 496" stroke="#5c6b78" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="427" y1="298" x2="427" y2="274" stroke="#5a675e" stroke-width="1.3" stroke-dasharray="3 3" marker-end="url(#a)"/>
+  <line x1="502" y1="330" x2="1060" y2="330" stroke="#dce4dd" stroke-width="0"/>
 
-  <rect x="880" y="500" width="326" height="82" rx="10" class="box"/>
-  <text x="900" y="528" class="t">IAM execution role</text>
-  <text x="900" y="550" class="m">least privilege — this guardrail ARN</text>
-  <text x="900" y="568" class="m">and this model, not Bedrock full access</text>
+  <!-- ================= lab path ================= -->
+  <rect x="32" y="446" width="918" height="140" rx="10" fill="#fff" stroke="#2f7d4f" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="48" y="470" font-size="12" font-weight="700" fill="#2f7d4f">THE LAB PATH — same guardrail, no deployed infrastructure</text>
 
-  <!-- terraform -->
-  <rect x="40" y="626" width="1320" height="118" rx="10" fill="#f7f9f7" stroke="#dce4dd" stroke-width="1.5"/>
-  <text x="64" y="654" class="hdr">INFRASTRUCTURE AS CODE</text>
-  <text x="64" y="681" class="t">Terraform · single environment · one apply</text>
-  <text x="64" y="706" class="m">guardrail · lambda + arm64 packaging · http api · amplify app + branch · iam · log groups · alarms</text>
-  <text x="64" y="728" class="s">terraform apply → scripts/deploy-frontend.sh → scripts/smoke-test.sh</text>
+  <rect x="48" y="484" width="196" height="86" rx="8" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="1.2"/>
+  <text x="60" y="504" font-size="11.5" font-weight="700" fill="#16211c">lab doctor</text>
+  <text x="60" y="521" font-size="10" fill="#5a675e">checks prerequisites first;</text>
+  <text x="60" y="534" font-size="10" fill="#5a675e">tells an SCP deny apart</text>
+  <text x="60" y="547" font-size="10" fill="#5a675e">from a missing IAM grant</text>
+  <text x="60" y="563" font-size="9.5" font-style="italic" fill="#2f7d4f">creates nothing</text>
 
-  <rect x="828" y="644" width="510" height="82" rx="8" class="box"/>
-  <text x="848" y="670" class="t2">shared/scenario.json</text>
-  <text x="848" y="691" class="m">one policy definition — read by Terraform (jsondecode)</text>
-  <text x="848" y="709" class="m">and by the backend at runtime. No second copy to drift.</text>
+  <rect x="258" y="484" width="196" height="86" rx="8" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="1.2"/>
+  <text x="270" y="504" font-size="11.5" font-weight="700" fill="#16211c">lab evaluate</text>
+  <text x="270" y="521" font-size="10" fill="#5a675e">one prompt, every finding,</text>
+  <text x="270" y="534" font-size="10" fill="#5a675e">the forwarded text</text>
+  <text x="270" y="563" font-size="9.5" font-style="italic" fill="#2f7d4f">ApplyGuardrail only</text>
+
+  <rect x="468" y="484" width="196" height="86" rx="8" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="1.2"/>
+  <text x="480" y="504" font-size="11.5" font-weight="700" fill="#16211c">lab conformance</text>
+  <text x="480" y="521" font-size="10" fill="#5a675e">the whole case set, N reps,</text>
+  <text x="480" y="534" font-size="10" fill="#5a675e">JSONL records out</text>
+  <text x="480" y="563" font-size="9.5" font-style="italic" fill="#2f7d4f">every measured number</text>
+
+  <rect x="678" y="484" width="256" height="86" rx="8" fill="#f0fdf4" stroke="#2f7d4f" stroke-width="1.2"/>
+  <text x="690" y="504" font-size="11.5" font-weight="700" fill="#16211c">lab checkpoint · lab teardown</text>
+  <text x="690" y="521" font-size="10" fill="#5a675e">verify a module; then remove</text>
+  <text x="690" y="534" font-size="10" fill="#5a675e">everything, without Terraform state</text>
+  <text x="690" y="563" font-size="9.5" font-style="italic" fill="#2f7d4f">one billable resource, under $0.05</text>
+
+  <line x1="244" y1="527" x2="252" y2="527" stroke="#2f7d4f" stroke-width="1.4" marker-end="url(#ag)"/>
+  <line x1="454" y1="527" x2="462" y2="527" stroke="#2f7d4f" stroke-width="1.4" marker-end="url(#ag)"/>
+  <line x1="664" y1="527" x2="672" y2="527" stroke="#2f7d4f" stroke-width="1.4" marker-end="url(#ag)"/>
+
+  <line x1="1010" y1="380" x2="1010" y2="470" stroke="#2b5f9e" stroke-width="1.4" stroke-dasharray="4 3"/>
+  <line x1="1010" y1="470" x2="956" y2="500" stroke="#2b5f9e" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#a)"/>
+  <text x="1022" y="424" font-size="9.5" fill="#2b5f9e">the lab uses</text>
+  <text x="1022" y="437" font-size="9.5" fill="#2b5f9e">the same</text>
+  <text x="1022" y="450" font-size="9.5" fill="#2b5f9e">guardrail</text>
+
+  <text x="32" y="606" font-size="10" fill="#5a675e">Region-agnostic: aws_region derives the guardrail profile, model ARNs and IAM. Any Region where Bedrock Guardrails runs.</text>
 </svg>

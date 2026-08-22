@@ -7,11 +7,13 @@ resource "aws_bedrock_guardrail" "main" {
   blocked_input_messaging   = local.scenario.blocked_input_message
   blocked_outputs_messaging = local.scenario.blocked_output_message
 
-  # STANDARD tier is only valid alongside cross-Region inference.
+  # STANDARD tier is only valid alongside cross-Region inference. The provider
+  # validates this argument as an ARN, not the bare profile id AWS also documents,
+  # so regions.tf assembles the ARN from the Region and account.
   dynamic "cross_region_config" {
-    for_each = var.guardrail_tier == "STANDARD" ? [1] : []
+    for_each = var.guardrail_tier == "STANDARD" && local.guardrail_profile_arn != "" ? [1] : []
     content {
-      guardrail_profile_identifier = var.guardrail_profile_id
+      guardrail_profile_identifier = local.guardrail_profile_arn
     }
   }
 

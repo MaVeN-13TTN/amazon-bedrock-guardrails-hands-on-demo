@@ -1,22 +1,17 @@
 {
   "_comment": "Single source of truth for the demo scenario and guardrail policy. Read by Terraform (jsondecode) to build the guardrail, and by the FastAPI backend at runtime. Editing this file changes both — there is no second copy to keep in step.",
-
   "org": "Highland Growers Co-operative",
   "assistant": "Kilimo Desk",
   "county": "Murang'a County",
   "guardrail_name": "kilimo-desk-member-support",
-
   "system_prompt": "You are Kilimo Desk, the member-support assistant for Highland Growers Co-operative, a smallholder farming co-operative in Murang'a County, Kenya.\n\nWhat you help with:\n- Co-operative membership, produce collection schedules, and payment cycles.\n- General agronomic guidance, grounded in the co-operative's extension bulletins.\n\nHard boundaries:\n- Never state a quantity, concentration, mixing ratio, or dosage for any agrochemical or veterinary medicine. Refer the member to a licensed agrovet.\n- Never advise on land ownership, title deeds, succession, or boundary disputes.\n- Never promise credit approval, interest rates, or repayment terms.\n\nKeep answers under 120 words, in plain language that reads well on a feature phone.\n",
-
   "extension_bulletin": "Highland Growers Co-operative - Extension Bulletin 14 (March 2026)\n\nPotato late blight: scout fields twice weekly from the fourth week after emergence. Remove and bury volunteer plants between rows. Certified seed issued from the co-operative store is already treated before collection.\n\nCollection points at Kangema and Kiriaini open from 06:00 to 10:00 on Tuesdays and Fridays only. Members must present a valid member number at the gate.\n\nPayment for delivered produce is released fourteen days after grading is complete. Grading results are posted at the collection point.\n",
-
   "blocked_input_message": "I can't help with that one. For anything involving chemical doses, land matters, or credit decisions, please speak to the co-operative office or a licensed agrovet.",
   "blocked_output_message": "I started to answer that but the response didn't meet our member-safety rules. Please contact the co-operative office.",
-
   "denied_topics": [
     {
       "name": "Agrochemical Dosing",
-      "definition": "Specifying quantities, concentrations, mixing ratios, or application rates for pesticides, herbicides, fungicides, fertilisers, or veterinary medicines.",
+      "definition": "A request for a number: how many millilitres, grams, litres or kilogrammes of a pesticide, herbicide, fungicide, fertiliser or animal medicine to apply, or its dilution or application rate.",
       "examples": [
         "How many millilitres of fungicide per 20 litre knapsack?",
         "What dose of antibiotic should I give a sick calf?",
@@ -40,23 +35,52 @@
       ]
     }
   ],
-
   "content_filters": [
-    { "type": "HATE",          "input_strength": "HIGH", "output_strength": "HIGH" },
-    { "type": "INSULTS",       "input_strength": "HIGH", "output_strength": "HIGH" },
-    { "type": "SEXUAL",        "input_strength": "HIGH", "output_strength": "HIGH" },
-    { "type": "VIOLENCE",      "input_strength": "HIGH", "output_strength": "HIGH" },
-    { "type": "MISCONDUCT",    "input_strength": "HIGH", "output_strength": "HIGH" },
-    { "type": "PROMPT_ATTACK", "input_strength": "HIGH", "output_strength": "NONE" }
+    {
+      "type": "HATE",
+      "input_strength": "HIGH",
+      "output_strength": "HIGH"
+    },
+    {
+      "type": "INSULTS",
+      "input_strength": "HIGH",
+      "output_strength": "HIGH"
+    },
+    {
+      "type": "SEXUAL",
+      "input_strength": "HIGH",
+      "output_strength": "HIGH"
+    },
+    {
+      "type": "VIOLENCE",
+      "input_strength": "HIGH",
+      "output_strength": "HIGH"
+    },
+    {
+      "type": "MISCONDUCT",
+      "input_strength": "HIGH",
+      "output_strength": "HIGH"
+    },
+    {
+      "type": "PROMPT_ATTACK",
+      "input_strength": "HIGH",
+      "output_strength": "NONE"
+    }
   ],
-
-  "blocked_words": ["Project Tumaini", "Batch Ledger v2"],
-
+  "blocked_words": [
+    "Project Tumaini",
+    "Batch Ledger v2"
+  ],
   "pii_entities": [
-    { "type": "PHONE", "action": "ANONYMIZE" },
-    { "type": "NAME",  "action": "ANONYMIZE" }
+    {
+      "type": "PHONE",
+      "action": "ANONYMIZE"
+    },
+    {
+      "type": "NAME",
+      "action": "ANONYMIZE"
+    }
   ],
-
   "pii_regexes": [
     {
       "name": "Co-op Member Number",
@@ -71,7 +95,33 @@
       "action": "ANONYMIZE"
     }
   ],
-
   "grounding_threshold": 0.7,
-  "relevance_threshold": 0.7
+  "relevance_threshold": 0.7,
+  "_landing_comment": "The two blocks below are read only by the backend, for GET /api/context. Terraform does not reference them, so editing them cannot change the guardrail. Every string value in bulletin_facts must appear verbatim in extension_bulletin above — backend/app/scenario.py asserts this at import, so a bulletin edit that invalidates a fact fails immediately rather than misinforming a member.",
+  "bulletin_facts": {
+    "collection_points": [
+      "Kangema",
+      "Kiriaini"
+    ],
+    "collection_opens": "06:00",
+    "collection_closes": "10:00",
+    "collection_days": [
+      "Tuesday",
+      "Friday"
+    ],
+    "gate_requirement": "present a valid member number at the gate",
+    "payment_delay_days": 14,
+    "payment_release": "released fourteen days after grading is complete",
+    "payment_note": "Grading results are posted at the collection point."
+  },
+  "about_sections": [
+    {
+      "title": "Who we are",
+      "body": "Highland Growers Co-operative is a smallholder farming co-operative in Murang'a County. Members grow potatoes and other highland crops on small plots and deliver their produce to a shared collection point for grading and sale."
+    },
+    {
+      "title": "What we do for members",
+      "body": "We collect and grade produce, pay members for what they deliver, supply certified seed from the co-operative store, and publish extension bulletins with growing guidance. Kilimo Desk answers member questions about any of this."
+    }
+  ]
 }

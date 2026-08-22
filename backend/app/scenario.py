@@ -12,6 +12,8 @@ import json
 import os
 import pathlib
 
+from app.schemas import BulletinFacts, SectionText
+
 _CANDIDATES = [
     # Lambda: the packaging step copies the file next to the app package.
     pathlib.Path(__file__).resolve().parent.parent / "scenario.json",
@@ -31,6 +33,51 @@ def _load() -> dict:
 
 
 _DATA = _load()
+
+# The parsed scenario, for callers that need the policy definition itself rather
+# than the derived constants below — Terraform reads the same file, and
+# scripts/measure-tier-gap.py builds a guardrail from it.
+RAW = _DATA
+
+
+def _iter_strings(value, path: str):
+    """Yield (path, string) for every string nested anywhere under `value`.
+
+    Non-strings are skipped rather than stringified: payment_delay_days is the
+    integer 14 while the bulletin spells it "fourteen", so stringifying would
+    produce a spurious failure. The prose claim is guarded instead by
+    payment_release, which is a verbatim phrase.
+    """
+    if isinstance(value, str):
+        yield path, value
+    elif isinstance(value, list):
+        for i, item in enumerate(value):
+            yield from _iter_strings(item, f"{path}[{i}]")
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            yield from _iter_strings(item, f"{path}.{key}")
+
+
+def check_bulletin_facts(facts: dict, bulletin: str) -> None:
+    """Raise ValueError if any fact string is absent from the bulletin.
+
+    The Landing_Page presents these facts to a member as though read from the
+    bulletin. If an edit to the bulletin leaves a fact behind, the page would
+    state something the co-operative's own document does not — so this fails at
+    import rather than misinforming a member on stage.
+    """
+    drifted = [
+        (path, text)
+        for path, text in _iter_strings(facts, "bulletin_facts")
+        if text not in bulletin
+    ]
+    if drifted:
+        detail = "; ".join(f"{path} = {text!r}" for path, text in drifted)
+        raise ValueError(
+            f"scenario.json: bulletin_facts no longer match extension_bulletin. "
+            f"Absent from the bulletin: {detail}"
+        )
+
 
 ORG: str = _DATA["org"]
 ASSISTANT: str = _DATA["assistant"]
@@ -53,3 +100,12 @@ PII_REGEXES: list[dict] = _DATA["pii_regexes"]
 
 GROUNDING_THRESHOLD: float = _DATA["grounding_threshold"]
 RELEVANCE_THRESHOLD: float = _DATA["relevance_threshold"]
+
+# Landing_Page content. Read only by GET /api/context; Terraform references
+# neither block, so editing them cannot change the guardrail.
+check_bulletin_facts(_DATA["bulletin_facts"], EXTENSION_BULLETIN)
+
+BULLETIN_FACTS: BulletinFacts = BulletinFacts.model_validate(_DATA["bulletin_facts"])
+ABOUT_SECTIONS: list[SectionText] = [
+    SectionText.model_validate(s) for s in _DATA["about_sections"]
+]

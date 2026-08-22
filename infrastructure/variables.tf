@@ -1,5 +1,12 @@
 variable "aws_region" {
-  description = "Region for every resource. Bedrock Guardrails, Lambda and Amplify must agree."
+  description = <<-EOT
+    Region for every resource. Any Region where Bedrock Guardrails is available
+    works: the guardrail profile, the model ARNs and the IAM policy are all derived
+    from this one value, so changing it is the only edit required.
+
+    Check your Region first:
+      python -m lab doctor
+  EOT
   type        = string
   default     = "eu-west-1"
 }
@@ -12,13 +19,28 @@ variable "project" {
 
 variable "bedrock_model_id" {
   description = <<-EOT
-    Model the backend calls. In eu-west-1 current Claude models are not served on a
-    bare model ID — an on-demand call must go through a cross-Region inference
-    profile, hence the `eu.` prefix. A bare ID fails with
-    "Invocation with on-demand throughput isn't supported".
+    Model the answer stage calls. Current Claude models are not served on a bare
+    model ID in most Regions — an on-demand call must go through an inference
+    profile, or it fails with "Invocation with on-demand throughput isn't
+    supported" (ADR decision 10).
+
+    Pick the prefix that matches your Region's geography:
+
+      global.anthropic.claude-haiku-4-5-20251001-v1:0   inference stays in your Region
+      us.anthropic.claude-haiku-4-5-20251001-v1:0       fans out across US Regions
+      eu.anthropic.claude-haiku-4-5-20251001-v1:0       fans out across EU Regions
+      apac.anthropic.claude-haiku-4-5-20251001-v1:0     fans out across APAC Regions
+
+    `global.` is the default because a profile that resolves to one Region cannot
+    route a request into a Region your organisation denies, and because the IAM it
+    needs is fully derived here. A geographic profile chooses its own destination
+    per request, which makes a denial name a Region you never asked for.
+
+    Confirm what is available to you:
+      aws bedrock list-inference-profiles --region <your-region>
   EOT
   type        = string
-  default     = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+  default     = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
 }
 
 variable "guardrail_tier" {
@@ -39,12 +61,16 @@ variable "guardrail_tier" {
 
 variable "guardrail_profile_id" {
   description = <<-EOT
-    Cross-Region guardrail profile, required by the STANDARD tier. Follows
-    `<geo>.guardrail.v1:0`. Verify with:
-      aws bedrock list-guardrail-profiles --region <region>
+    Guardrail profile ID for the STANDARD tier, e.g. `eu.guardrail.v1:0`.
+
+    Leave empty — the default — and it is derived from `aws_region`, so you should
+    never need to set this. Override it only if AWS adds a profile for a Region
+    this configuration does not yet know about.
+
+    Coverage: https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-cross-region-support.html
   EOT
   type        = string
-  default     = "eu.guardrail.v1:0"
+  default     = ""
 }
 
 variable "publish_guardrail_version" {

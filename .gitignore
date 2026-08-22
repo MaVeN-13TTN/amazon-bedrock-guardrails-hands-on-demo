@@ -29,3 +29,8 @@ crash.log
 .ruff_cache/
 *.tsbuildinfo
 .pytest_cache/
+.hypothesis/
+
+# playwright
+frontend/test-results/
+frontend/playwright-report/
