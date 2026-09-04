@@ -34,7 +34,7 @@ one stage that needs a model, and teaches it from a recorded response.
 | Requirement | Minimum | Check |
 |---|---|---|
 | Python | 3.12 | `python --version` |
-| Terraform | 1.5 | `terraform version` |
+| Terraform | 1.7 | `terraform version` — `versions.tf` requires `>= 1.7.0` |
 | AWS CLI | 2.x | `aws --version` |
 | boto3 | **1.38.0** | earlier versions reject `outputScope` ([V-14](validation-log.md)) or silently drop the guardrail tier ([V-24](validation-log.md)) |
 | AWS credentials | any | `aws sts get-caller-identity` |
@@ -56,6 +56,9 @@ The three tag actions are needed because Terraform tags what it manages and read
 back when refreshing state. Omit them and `apply` works exactly once, then never plans
 again ([V-13](validation-log.md)).
 
+**You do not need to write that policy by hand.** `python -m lab policy` prints it with
+your own account id and Region substituted, ready to paste into a role or permission set.
+
 ### Cost
 
 **Under $0.05 for the whole lab.** [cost.md](cost.md) shows the derivation: ≈ 610
@@ -65,7 +68,8 @@ once you run `lab teardown`.
 ### Setup
 
 ```bash
-git clone <this-repository> && cd amazon-bedrock-guardrails-hands-on-demo
+git clone https://github.com/MaVeN-13TTN/amazon-bedrock-guardrails-hands-on-demo.git
+cd amazon-bedrock-guardrails-hands-on-demo
 python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 
@@ -393,7 +397,7 @@ maintain.
 **This module is the most likely to surprise you.**
 
 ```bash
-python -m lab evaluate --prompt "I am Grace Wanjiku, member HG-004182, my number is 0722135790. Has my payment gone out?"
+python -m lab evaluate --prompt "I am Grace Wanjiku, member HG-004182, my number is 0722135790. How long after grading do I get paid?"
 ```
 
 ```
@@ -402,7 +406,7 @@ findings          3
   · PII                NAME                         ANONYMIZED
   · PII regex          Co-op Member Number          ANONYMIZED
   · PII                PHONE                        ANONYMIZED
-text forwarded    I am {NAME}, member {Co-op Member Number}, my number is {PHONE}. Has my payment gone out?
+text forwarded    I am {NAME}, member {Co-op Member Number}, my number is {PHONE}. How long after grading do I get paid?
                   (rewritten: a policy masked part of the input)
 ```
 
@@ -799,17 +803,15 @@ your fix, not your setup.
   differently. Pick another in-scope prompt that does block from
   `results/tuning-before.jsonl` and use it — and record that the seed case did not
   reproduce for you rather than deleting it.
+- **narrowing never improves the rate.** Try up to three iterations, then stop and record
+  it. Some topics resist tightening, and knowing that is a result.
 
-**When you stop:** `python -m lab teardown`
+**When you finish:** `python -m lab teardown`
 
 Prefer this to `terraform destroy` if your account lacks the three tag permissions:
 `destroy` fails on `ListTagsForResource` during its state refresh — before deleting
 anything — and needs `-refresh=false` to proceed ([V-28](validation-log.md)). `lab
 teardown` finds the guardrail by name and reads no state at all.
-- **narrowing never improves the rate.** Try up to three iterations, then stop and record
-  it. Some topics resist tightening, and knowing that is a result.
-
-**When you finish:** `python -m lab teardown`
 
 ---
 
@@ -850,7 +852,7 @@ aws bedrock list-guardrails --region $AWS_REGION \
 ## Where to go next
 
 - [results.md](results.md) — every measurement, with its record set
-- [validation-log.md](validation-log.md) — 30 entries, including twelve defects found in
+- [validation-log.md](validation-log.md) — 33 entries, including fifteen defects found in
   this repository's own code
 - [../ADR.md](../ADR.md) — the architectural decisions and their rejected alternatives
 - [demo-runbook.md](demo-runbook.md) — the 60-minute presented version

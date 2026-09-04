@@ -82,7 +82,16 @@ else
 fi
 
 if have terraform; then
-  ok "terraform $(terraform version -json 2>/dev/null | "$PY" -c 'import json,sys;print(json.load(sys.stdin)["terraform_version"])' 2>/dev/null || echo present)"
+  # versions.tf requires >= 1.7.0. Reporting the version without checking it let an
+  # attendee on 1.6 pass every check here and then fail at `terraform init`.
+  tfv="$(terraform version -json 2>/dev/null | "$PY" -c 'import json,sys;print(json.load(sys.stdin)["terraform_version"])' 2>/dev/null || echo "")"
+  if [[ -z "$tfv" ]]; then
+    ok "terraform present (version not reported)"
+  elif "$PY" -c 'import sys;v=tuple(int(x) for x in sys.argv[1].split(".")[:3]);sys.exit(0 if v>=(1,7,0) else 1)' "$tfv"; then
+    ok "terraform $tfv (>= 1.7.0)"
+  else
+    bad "terraform $tfv" "infrastructure/versions.tf requires >= 1.7.0"
+  fi
 else
   miss "terraform" "needed only to create the guardrail"
 fi
@@ -119,7 +128,8 @@ rt = s.get_service_model("bedrock-runtime")
 has_scope = "outputScope" in rt.operation_model("ApplyGuardrail").input_shape.members
 topic = s.get_service_model("bedrock").operation_model("GetGuardrail").output_shape.members.get("topicPolicy")
 has_tier = topic is not None and "tier" in topic.members
-print(f"{boto3.__version__} {botocore.__version__} {int(has_scope)} {int(has_tier)}")
+# Exit status is the whole result. Printing here would land in the middle of the
+# report, which is why this probe used to emit a stray "1.38.0 1.38.46 1 1" line.
 sys.exit(0 if (has_scope and has_tier) else 1)
 PYEOF
   rc=$?

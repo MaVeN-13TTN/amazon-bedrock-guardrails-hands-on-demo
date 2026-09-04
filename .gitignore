@@ -38,3 +38,9 @@ crash.log
 # playwright
 frontend/test-results/
 frontend/playwright-report/
+
+# Slide deck working copy. `deck-stage.js` and `support.js` are generated canvas
+# runtime files, not source, and the deck still carries [SPEAKER TO FILL IN]
+# placeholders. The 3-page handout in assets/ covers the same ground and is
+# finished. Export a PDF here if the deck itself should ship.
+assets/kilimo-builder-slide-deck/

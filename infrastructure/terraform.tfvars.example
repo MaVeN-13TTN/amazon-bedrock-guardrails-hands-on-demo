@@ -1,18 +1,43 @@
-# Copy to terraform.tfvars and adjust. Every value here has a working default.
+# Copy to terraform.tfvars and adjust. Every value here has a working default,
+# and every value is commented out — the defaults in variables.tf are what this
+# file documents, not what it overrides. Uncomment only what you want to change.
 
-aws_region = "eu-west-1"
-project    = "kilimo-desk"
+# The one variable worth setting. Any Region where Bedrock Guardrails is
+# available works: the guardrail profile, the model ARNs and the IAM policy are
+# all derived from it in regions.tf, so this is the only edit a new Region needs.
+# aws_region = "eu-west-1"
 
-# eu-west-1 requires a cross-Region inference profile: note the `eu.` prefix.
-bedrock_model_id = "eu.anthropic.claude-haiku-4-5-20251001-v1:0"
+# project = "kilimo-desk"
 
-# Flip to "CLASSIC" and re-apply to demonstrate the tier gap live.
-guardrail_tier       = "STANDARD"
-guardrail_profile_id = "eu.guardrail.v1:0"
+# Default: global.anthropic.claude-haiku-4-5-20251001-v1:0
+#
+# A bare model id is rejected in most Regions — an on-demand call must go through
+# an inference profile (validation log V-08). `global.` keeps inference in your
+# own Region; a geographic prefix (`eu.`, `us.`, `apac.`) fans out across that
+# geography and can route a call into a Region an organisation SCP denies, which
+# fails naming a Region you never asked for (V-09, V-11). Prefer `global.`.
+# bedrock_model_id = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
+
+# Default: STANDARD. Flip to CLASSIC and re-apply to demonstrate the tier gap
+# live — CLASSIC covers English, French and Spanish only, so the Swahili prompt
+# attack sails through (measured, V-26). CLASSIC also needs no guardrail profile,
+# which makes it the right choice in a Region that has none.
+# guardrail_tier = "CLASSIC"
+
+# Leave this unset. It is derived from aws_region in regions.tf, and hardcoding
+# it breaks Region portability — an `eu.` profile id in a us-east-1 apply builds
+# an ARN AWS rejects. Override only if AWS adds a profile for a Region this
+# configuration does not yet know about.
+# guardrail_profile_id = ""
+
+# Set false for a presented session, so GUARDRAIL_VERSION resolves to DRAFT and a
+# tier swap takes effect immediately. With a numbered version pinned and not
+# recut, the swap changes nothing visible — see RUNNING.md, "the trap".
+# publish_guardrail_version = true
 
 # Cost guard on an unauthenticated endpoint.
-api_throttling_rate_limit  = 10
-api_throttling_burst_limit = 20
+# api_throttling_rate_limit  = 10
+# api_throttling_burst_limit = 20
 
 # Optional: connect a Git repo for Amplify CI builds instead of manual deploys.
 # amplify_repository_url = "https://github.com/<you>/<repo>"

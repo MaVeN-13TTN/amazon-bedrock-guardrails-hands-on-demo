@@ -15,18 +15,30 @@ independent policy engine you can invoke on its own.
 |---|---|---|
 | **Check your install is correct** | `./scripts/verify-install.sh` | 2 min |
 | **Check your AWS account will work** | [docs/aws-prerequisites.md](docs/aws-prerequisites.md) | 5 min |
-| **Run the lab yourself** | [docs/lab-guide.md](docs/lab-guide.md) | 90 min |
+| **Run the lab yourself** ← *start here* | [docs/lab-guide.md](docs/lab-guide.md) | 90 min |
 | **Present the 60-minute session** | [docs/demo-runbook.md](docs/demo-runbook.md) | 60 min |
 | **See what was measured** | [docs/results.md](docs/results.md) | 10 min read |
 | **Know what it costs** | [docs/cost.md](docs/cost.md) | 3 min read |
 | **Read the design decisions** | [ADR.md](ADR.md) | 20 min read |
 | **Understand the UI** | [the two views](#the-two-views) | 2 min read |
-| **Deploy the full stack** | [RUNNING.md](RUNNING.md) | 20 min |
+| **Deploy the full stack** ⚠ *never applied* | [RUNNING.md](RUNNING.md) | 20 min |
+
+**The lab is the path that is known to work.** All 15 of its checkpoints have been met
+against live AWS ([V-20](docs/validation-log.md)), it creates one guardrail, and it needs
+no Bedrock model access. **The deployed stack has never been stood up by anyone** —
+`iam:CreateRole` is denied in the account this was built in, so no Lambda, API Gateway or
+Amplify app created by this repository has ever existed ([V-29](docs/validation-log.md)).
+Terraform validates, the bundle builds and the handler is tested offline; whether `apply`
+completes is unknown. [RUNNING.md](RUNNING.md) opens with the full status.
+
+From the session itself:
+[the handout](assets/Amazon-Bedrock-Guardrails-Workshop-Handout.pdf) (3 pages — what each
+policy does and where it stops) and [the event poster](assets/aws-aiml-kenya-meetup-poster.jpeg).
 
 Before anything else, two commands. The first needs no AWS account at all:
 
 ```bash
-./scripts/verify-install.sh         # 54 checks, no credentials, creates nothing
+./scripts/verify-install.sh         # 55 checks, no credentials, creates nothing
 
 export AWS_REGION=eu-west-1         # or any Region where Bedrock Guardrails runs
 python -m lab doctor                # creates nothing, tells you what is missing
@@ -55,7 +67,7 @@ loud. A bad chemical dose harms a crop, an animal, or a person.
 - **[docs/lab-guide.md](docs/lab-guide.md)** — the eight-module self-paced lab
 - **[docs/results.md](docs/results.md)** — every measurement, with its record set
 - **[docs/cost.md](docs/cost.md)** — what it costs, and how that is derived
-- **[docs/validation-log.md](docs/validation-log.md)** — 30 entries: what was run against AWS, and the twelve defects it found in committed code
+- **[docs/validation-log.md](docs/validation-log.md)** — 33 entries: what was run against AWS, and the fifteen defects it found in committed code
 - **[RUNNING.md](RUNNING.md)** — deploying the full stack
 - **[ADR.md](ADR.md)** — architecture decisions, and the alternatives rejected
 - **[docs/demo-runbook.md](docs/demo-runbook.md)** — the 60-minute presented session
@@ -117,8 +129,8 @@ frontend/         Next.js 15 static export: the Landing_Page with its embedded
 backend/          FastAPI — runs under uvicorn locally, Lambda via Mangum deployed
                   app/fixtures/replay/ — responses recorded from live AWS, so the
                   whole pipeline runs with no credentials at all
-lab/              the Lab_CLI — doctor, evaluate, conformance, checkpoint, latency,
-                  teardown. Calls ApplyGuardrail only; needs no model access
+lab/              the Lab_CLI — doctor, policy, evaluate, conformance, checkpoint,
+                  latency, teardown. Calls ApplyGuardrail only; no model access
 infrastructure/   Terraform — guardrail, Lambda, HTTP API, Amplify, IAM, alarms
 shared/           scenario.json — one policy definition, read by Terraform and the app
 results/          the JSONL every measured number in docs/results.md is computed from
@@ -176,7 +188,7 @@ Five of the six policy types, chosen by the domain rather than to tour the produ
 `ANONYMIZE` is the API's name for the console's *Mask*, and setting `input_action`
 means the value is replaced **before the model receives it**. Send:
 
-> I am Grace Wanjiku, member HG-004182, my number is 0722135790. Has my payment gone out?
+> I am Grace Wanjiku, member HG-004182, my number is 0722135790. How long after grading do I get paid?
 
 Stage 1 reports three separate hits — `NAME`, `PHONE`, and the `Co-op Member
 Number` regex — and shows the rewritten string that gets forwarded. The request is
@@ -387,6 +399,12 @@ voluntary.
   the command that would verify it. The STANDARD tier **is** now measured
   ([V-26](docs/validation-log.md)), though Terraform still cannot create a STANDARD
   guardrail here without the tag permissions of [V-13](docs/validation-log.md).
+- **One Replay_Mode fixture is stale and must be re-recorded.** The masking case's prompt
+  changed ([V-32](docs/validation-log.md)), so `backend/app/fixtures/replay/pii-classic.json`
+  is keyed to text no longer in `lab/cases.json`. Until `python -m lab conformance --record
+  --set pii` is run against a live guardrail, Replay_Mode answers that prompt with a 409 and
+  `test_every_committed_fixture_is_still_a_declared_case` fails by design. Every other path
+  is unaffected; the live pipeline is correct.
 
 ## Relationship to the AWS workshop
 

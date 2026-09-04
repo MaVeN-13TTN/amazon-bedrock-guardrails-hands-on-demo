@@ -3,6 +3,36 @@
 Two paths. **Local** needs an AWS account and a guardrail; **deployed** stands up
 the whole stack in eu-west-1 with one `terraform apply`.
 
+> ### Status: Path A has never been applied against AWS
+>
+> Read this before choosing a path. **No Lambda, API Gateway or Amplify app created
+> by this repository has ever existed.** `iam:CreateRole` is denied in the account
+> this project was built in, so `terraform apply` cannot create the Lambda execution
+> role, and every resource downstream of it is unreached
+> ([V-29](docs/validation-log.md)). Being honest about that is worth more than a
+> confident instruction that fails on someone else's laptop.
+>
+> **If you want a path that is known to work, use [the lab](docs/lab-guide.md).** It
+> creates one guardrail, needs no model access, and every one of its 15 checkpoints
+> has been met against live AWS ([V-20](docs/validation-log.md)).
+>
+> What *is* verified for Path A, with no AWS involved:
+>
+> | | How |
+> |---|---|
+> | Terraform parses, validates and is canonically formatted | `terraform validate`, `fmt -check` in `verify-install.sh` |
+> | The Lambda bundle builds, at the right architecture | `scripts/package-backend.sh` → 9.0M, `aarch64` wheels |
+> | The Lambda entry point routes and answers | `backend/tests/test_lambda_handler.py` — a synthetic API Gateway v2 event through Mangum |
+> | The frontend builds as a static export | `npm run build` → 4 pages exported |
+> | The whole pipeline runs with no credentials | `scripts/replay-check.sh` |
+>
+> What is **not** verified: IAM in a real account, API Gateway's event shape, CORS
+> against a live Amplify origin, cold-start latency, and whether `apply` completes.
+>
+> **If you are the first to run it, please [open an issue](https://github.com/MaVeN-13TTN/amazon-bedrock-guardrails-hands-on-demo/issues)
+> with what broke.** Run `python -m lab doctor --check-deploy` first — it tells you
+> whether your account has `iam:CreateRole` before you spend time on it.
+
 - [Prerequisites](#prerequisites)
 - [Path A — deploy everything](#path-a--deploy-everything)
 - [Path B — local development](#path-b--local-development)
@@ -64,16 +94,33 @@ and V-11.
 
 ### 3. Confirm the cross-Region guardrail profile
 
-The STANDARD tier needs one. The default is `eu.guardrail.v1:0`; verify:
+The STANDARD tier needs one; CLASSIC needs none. The profile is **derived from your
+Region** in [`infrastructure/regions.tf`](infrastructure/regions.tf) — `eu-west-1`
+resolves to `eu.guardrail.v1:0` — so there is normally nothing to set.
+
+**There is no CLI command that lists guardrail profiles.** `aws bedrock
+list-guardrail-profiles` does not exist in aws-cli 2.36.14, and
+`list-inference-profiles` returns no guardrail profile either, so the identifier
+cannot be confirmed from the CLI ([V-01](docs/validation-log.md)). The mapping in
+`regions.tf` comes from [AWS's coverage
+table](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-cross-region-support.html)
+instead.
+
+If your Region has no profile, `terraform apply` fails a precondition with a readable
+message rather than an AWS rejection. Either use CLASSIC, which needs no profile:
 
 ```bash
-# NOTE: this command does not exist in aws-cli 2.36.14 (validation log V-01).
-# The guardrail-profile identifier could not be verified. Use the CLASSIC tier,
-# which needs no profile:
-#   terraform apply -var guardrail_tier=CLASSIC
+terraform apply -var guardrail_tier=CLASSIC
 ```
 
-If the profile differs, set `guardrail_profile_id` in `terraform.tfvars`.
+or set the identifier explicitly if AWS has since added one for your Region:
+
+```bash
+terraform apply -var guardrail_profile_id=<geo>.guardrail.v1:0
+```
+
+Do not put `guardrail_profile_id` in `terraform.tfvars` as a matter of course —
+hardcoding it is what breaks a later Region change.
 
 ---
 
@@ -94,7 +141,8 @@ which the Lab_Path does not. Without it `terraform apply` fails and no endpoint 
 ## Path A — deploy everything
 
 ```bash
-git clone <this repo> && cd amazon-bedrock-guardrails-hands-on-demo
+git clone https://github.com/MaVeN-13TTN/amazon-bedrock-guardrails-hands-on-demo.git
+cd amazon-bedrock-guardrails-hands-on-demo
 
 cd infrastructure
 cp terraform.tfvars.example terraform.tfvars     # defaults are fine
@@ -371,11 +419,8 @@ aws logs tail "$(terraform -chdir=infrastructure output -raw lambda_log_group)" 
 | Symptom | Cause | Fix |
 |---|---|---|
 | `AccessDeniedException` on converse | model access not granted in eu-west-1 | Bedrock console → Model access → enable Claude Haiku 4.5, wait for `Access granted` |
-| `Invocation with on-demand throughput isn't supported` | bare model ID in eu-west-1 | use the `eu.` inference profile — the default `bedrock_model_id` already does |
-| `ValidationException` mentioning `guardrailProfile` | STANDARD tier without a valid profile | `# NOTE: this command does not exist in aws-cli 2.36.14 (validation log V-01).
-# The guardrail-profile identifier could not be verified. Use the CLASSIC tier,
-# which needs no profile:
-#   terraform apply -var guardrail_tier=CLASSIC`, then set `guardrail_profile_id`; or apply with `-var guardrail_tier=CLASSIC` |
+| `Invocation with on-demand throughput isn't supported` | bare model ID — most Regions reject one | use an inference profile; the default `bedrock_model_id` is already `global.anthropic.claude-haiku-4-5-...` ([V-08](docs/validation-log.md)) |
+| `ValidationException` mentioning `guardrailProfile` | STANDARD tier without a valid profile for your Region | `terraform apply -var guardrail_tier=CLASSIC`, which needs no profile; or set `-var guardrail_profile_id=<geo>.guardrail.v1:0`. No CLI command lists these ([V-01](docs/validation-log.md)) — see [step 3](#3-confirm-the-cross-region-guardrail-profile) |
 | `An argument named "tier_config" is not expected` | AWS provider 5.x | provider must be `~> 6.0`; `rm -rf .terraform .terraform.lock.hcl && terraform init` |
 | `503 No guardrail configured` from the API | `GUARDRAIL_ID` empty | local: refresh `backend/.env` from `terraform output -raw local_env_file`. deployed: re-apply |
 | `ImportModuleError: _pydantic_core` in Lambda | wrong-architecture wheels | re-run `./scripts/package-backend.sh`; it forces `manylinux2014_aarch64` |

@@ -20,7 +20,7 @@ is the most substantial collection, all Apache-2.0:
 | [`bedrock_guardrails_enforcements_tutorial.ipynb`](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/responsible_ai/bedrock-guardrails/bedrock_guardrails_enforcements_tutorial.ipynb) | enforcement patterns end to end |
 | [`guardrails_custom_model_import.ipynb`](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/responsible_ai/bedrock-guardrails/guardrails_custom_model_import.ipynb) | guardrails over imported custom models |
 
-Also: [`contextual-grounding.ipynb`](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/knowledge-bases/features-examples/05-responsible-ai/contextual-grounding.ipynb)
+Also: [`contextual_grounding.ipynb`](https://github.com/aws-samples/amazon-bedrock-samples/blob/main/rag/knowledge-bases/features-examples/05-responsible-ai/contextual_grounding.ipynb)
 — grounding with a real knowledge base, the path beyond this demo's inline
 `grounding_source`.
 
