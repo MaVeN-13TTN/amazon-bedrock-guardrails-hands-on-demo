@@ -349,3 +349,97 @@ def test_lambda_is_detected_by_function_name(monkeypatch, client):
     assert body["environment"] == "lambda"
     assert body["lambda_runtime"] == "AWS_Lambda_python3.12"
     assert body["lambda_function"] == "kilimo-desk-api"
+
+
+class MaskingBedrock(RecordingBedrock):
+    """Screen returns the shape AWS actually sends for a masked prompt.
+
+    One regex masked, and two managed entities that looked and allowed. That
+    second half only exists because this demo sets `outputScope=FULL`, and it is
+    what the Background_View shows as "a policy that looked and allowed"
+    (validation log V-23). It is also what broke the pipeline: see V-31.
+    """
+
+    def apply_guardrail(self, **kw):
+        self.calls.append(("apply_guardrail", kw["source"]))
+        self.apply_requests.append(kw)
+        if kw["source"] != "INPUT":
+            return {"action": "NONE", "outputs": [], "assessments": []}
+        return {
+            "action": "GUARDRAIL_INTERVENED",
+            "actionReason": "Guardrail masked.",
+            "outputs": [{"text": self.masked_text}],
+            "assessments": [
+                {
+                    "sensitiveInformationPolicy": {
+                        "piiEntities": [
+                            {"type": "PHONE", "action": "NONE", "match": ""},
+                            {"type": "NAME", "action": "NONE", "match": ""},
+                        ],
+                        "regexes": [
+                            {"name": "National ID", "action": "ANONYMIZED", "match": "24518803"},
+                        ],
+                    }
+                }
+            ],
+        }
+
+
+def test_a_masked_prompt_continues_even_when_other_policies_report_none():
+    """The regression test for V-31.
+
+    `action` is the string "NONE" for a policy that looked and allowed, and a
+    non-empty string is truthy — so a filter written as `if hit.action` keeps
+    those findings, and every one of them then fails an `== "ANONYMIZED"` test.
+    The request was refused as though it had been blocked.
+
+    The prompt below is the one the README and V-23 showcase, so the defect hit
+    the demo's own headline example.
+    """
+    stub = MaskingBedrock(
+        masked_text="My national ID is {National ID}, please check my membership status."
+    )
+    body = client_with(stub).post(
+        "/api/ask",
+        json={"input": "My national ID is 24518803, please check my membership status."},
+    ).json()
+
+    assert body["stopped_at"] is None, (
+        "a masked request must continue — it was refused at "
+        f"{body['stopped_at']!r} instead"
+    )
+    assert body["final"] != scenario.BLOCKED_INPUT_MESSAGE
+    # All three stages ran, and the model saw only the rewritten text.
+    assert [s["stage"] for s in body["stages"]] == ["screen", "answer", "verify"]
+    assert "24518803" not in stub.all_converse_text()
+
+
+def test_a_genuine_block_still_halts_when_a_policy_also_reports_none():
+    """The other direction: NONE findings must not turn a block into a pass."""
+
+    class BlockingBedrock(RecordingBedrock):
+        def apply_guardrail(self, **kw):
+            self.calls.append(("apply_guardrail", kw["source"]))
+            self.apply_requests.append(kw)
+            if kw["source"] != "INPUT":
+                return {"action": "NONE", "outputs": [], "assessments": []}
+            return {
+                "action": "GUARDRAIL_INTERVENED",
+                "outputs": [{"text": "unchanged"}],
+                "assessments": [
+                    {
+                        "topicPolicy": {"topics": [
+                            {"name": "Agrochemical Dosing", "action": "BLOCKED"}]},
+                        "sensitiveInformationPolicy": {"piiEntities": [
+                            {"type": "NAME", "action": "NONE", "match": ""}]},
+                    }
+                ],
+            }
+
+    stub = BlockingBedrock()
+    body = client_with(stub).post(
+        "/api/ask", json={"input": "How many millilitres of fungicide?"}
+    ).json()
+
+    assert body["stopped_at"] == "screen"
+    assert stub.converse_count == 0

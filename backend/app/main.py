@@ -312,8 +312,18 @@ def ask(
         # genuine block should halt the request — a masked request continues with the
         # personal data removed, which is the whole point of ANONYMIZE.
         # See docs/validation-log.md V-15.
-        masked_only = screened.intervened and bool(screened.hits) and all(
-            hit.action == "ANONYMIZED" for hit in screened.hits if hit.action
+        #
+        # Judge only the findings that *did* something. With outputScope=FULL — which
+        # this demo enables precisely so the UI can show which policies looked and
+        # allowed — most findings carry the action "NONE". That is a string, and a
+        # non-empty string is truthy, so filtering on `if hit.action` keeps them and
+        # every "NONE" then fails an `== "ANONYMIZED"` test. The effect was that any
+        # masked request accompanied by a NONE finding was refused as though it had
+        # been blocked: exactly the V-15 defect, returning by a different door.
+        # See docs/validation-log.md V-31.
+        acted = [hit for hit in screened.hits if hit.action and hit.action != "NONE"]
+        masked_only = screened.intervened and bool(acted) and all(
+            hit.action == "ANONYMIZED" for hit in acted
         )
         if screened.intervened and not masked_only:
             return _respond(stages, scenario.BLOCKED_INPUT_MESSAGE, "screen")
