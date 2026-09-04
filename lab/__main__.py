@@ -4,6 +4,7 @@
     python -m lab checkpoint  --module N
     python -m lab conformance [--repeat N] [--set NAME] [--out PATH] [--record [DIR]]
     python -m lab latency     --api-base URL [--warm N] [--wait-cold]
+    python -m lab policy      [--region REGION] [--deploy]
     python -m lab teardown
 
 Every subcommand runs preflight first, so a missing prerequisite costs no AWS call
@@ -94,6 +95,18 @@ def build_parser() -> argparse.ArgumentParser:
                      help="idle 15 minutes first so the first sample is genuinely cold")
     lat.add_argument("--out", help="write one JSONL record per sample")
 
+    pol = sub.add_parser(
+        "policy",
+        help="print the IAM policy you need, with your account and Region filled in",
+        description="Writes out the policy from docs/aws-prerequisites.md with REGION "
+                    "and ACCOUNT substituted, so there is nothing to hand-edit. Needs "
+                    "no permissions beyond sts:GetCallerIdentity, and falls back to "
+                    "the placeholders rather than guessing if it cannot resolve them.",
+    )
+    pol.add_argument("--region", help="defaults to AWS_REGION, then eu-west-1")
+    pol.add_argument("--deploy", action="store_true",
+                     help="also print the model-invocation policy and the deploy note")
+
     sub.add_parser("teardown", help="remove every resource the lab created")
     return parser
 
@@ -114,6 +127,8 @@ def main(argv: list[str] | None = None) -> int:
             return _conformance(args)
         if args.command == "latency":
             return _latency(args)
+        if args.command == "policy":
+            return _policy(args)
     except PreflightError as exc:
         print(f"prerequisite missing:\n{exc}", file=sys.stderr)
         return 2
@@ -186,6 +201,17 @@ def _conformance(args) -> int:
         out=args.out,
         record=args.record,
     )
+
+
+def _policy(args) -> int:
+    """No preflight: this is what you run *because* you do not have permissions yet."""
+    import os
+
+    from lab.policy import render
+
+    region = args.region or os.environ.get("AWS_REGION") or "eu-west-1"
+    print(render(region, deploy=args.deploy), end="")
+    return 0
 
 
 def _latency(args) -> int:

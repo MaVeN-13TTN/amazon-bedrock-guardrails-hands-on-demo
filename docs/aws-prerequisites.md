@@ -8,6 +8,7 @@ export AWS_PROFILE=<your-profile>    # or configure credentials another way
 
 python -m lab doctor                 # read-only: creates nothing
 python -m lab doctor --probe-write   # also creates and deletes a test guardrail
+python -m lab policy                 # the IAM policy, with your account already in it
 ```
 
 `lab doctor` checks credentials, account type, guardrail permissions, tag
@@ -87,7 +88,21 @@ need only IAM. Attach the policy below to your user, role, or SSO permission set
 The self-paced lab creates one guardrail and calls `ApplyGuardrail`. It never invokes a
 foundation model, so **Bedrock model access is not a prerequisite**.
 
-Replace `REGION` and `ACCOUNT`:
+**Do not hand-edit this.** The CLI prints the same policy with your account id and Region
+already substituted:
+
+```bash
+python -m lab policy                 # the Lab_Path policy, ready to paste
+python -m lab policy --deploy        # plus model invocation and the deploy note
+```
+
+It needs nothing but `sts:GetCallerIdentity`, and if it cannot resolve your account it
+leaves `ACCOUNT` in place and says so, rather than guessing. A mistyped ARN fails as
+`no identity-based policy allows`, which reads exactly like a missing grant — an hour
+lost to a typo that looks like a permissions problem.
+
+The policy it emits, with `REGION` and `ACCOUNT` to replace if you would rather copy it
+from here:
 
 ```json
 {
