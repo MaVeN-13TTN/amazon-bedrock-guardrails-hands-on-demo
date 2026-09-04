@@ -23,13 +23,32 @@ independent policy engine you can invoke on its own.
 | **Understand the UI** | [the two views](#the-two-views) | 2 min read |
 | **Deploy the full stack** ⚠ *never applied* | [RUNNING.md](RUNNING.md) | 20 min |
 
-**The lab is the path that is known to work.** All 15 of its checkpoints have been met
-against live AWS ([V-20](docs/validation-log.md)), it creates one guardrail, and it needs
-no Bedrock model access. **The deployed stack has never been stood up by anyone** —
-`iam:CreateRole` is denied in the account this was built in, so no Lambda, API Gateway or
-Amplify app created by this repository has ever existed ([V-29](docs/validation-log.md)).
-Terraform validates, the bundle builds and the handler is tested offline; whether `apply`
-completes is unknown. [RUNNING.md](RUNNING.md) opens with the full status.
+### Tested against live AWS
+
+**The lab and the presented demo both ran against real Bedrock, and the numbers in
+[docs/results.md](docs/results.md) are measurements, not estimates.** Every entry below
+names the validation-log entry that records the run.
+
+| What | Status | Evidence |
+|---|---|---|
+| Guardrail created by Terraform, all 5 policies present | **tested** | [V-13](docs/validation-log.md), [V-15](docs/validation-log.md) |
+| All 15 Lab_Guide checkpoints met | **tested** | [V-20](docs/validation-log.md) |
+| Denied topics, content filters, word filters, PII masking | **tested** | [V-15](docs/validation-log.md), [V-23](docs/validation-log.md) |
+| Contextual grounding, both checks independent | **tested** | [V-25](docs/validation-log.md) |
+| CLASSIC vs STANDARD tier gap, both halves | **tested** | [V-26](docs/validation-log.md) |
+| Full conformance suite, 155 records per tier | **tested** | [V-18](docs/validation-log.md), [V-26](docs/validation-log.md) |
+| The tuning loop, three measured iterations | **tested** | [V-17](docs/validation-log.md) |
+| Deployed Lambda, API Gateway, Amplify | **not stood up** | [V-29](docs/validation-log.md) |
+
+The one gap is the deployed stack. `iam:CreateRole` was denied in the account this was
+built in, so `terraform apply` was run **targeted at the guardrail** and the resources
+downstream of the Lambda execution role were never created
+([V-13](docs/validation-log.md), [V-29](docs/validation-log.md)). Terraform validates, the
+bundle builds, the handler is tested offline and the frontend exports; whether a full
+`apply` completes is the one thing nobody has observed. [RUNNING.md](RUNNING.md) opens with
+that status in full.
+
+**None of that affects the lab**, which needs one guardrail and no deployment at all.
 
 From the session itself:
 [the handout](assets/Amazon-Bedrock-Guardrails-Workshop-Handout.pdf) (3 pages — what each
@@ -67,7 +86,7 @@ loud. A bad chemical dose harms a crop, an animal, or a person.
 - **[docs/lab-guide.md](docs/lab-guide.md)** — the eight-module self-paced lab
 - **[docs/results.md](docs/results.md)** — every measurement, with its record set
 - **[docs/cost.md](docs/cost.md)** — what it costs, and how that is derived
-- **[docs/validation-log.md](docs/validation-log.md)** — 36 entries: what was run against AWS, and the eighteen defects it found in committed code
+- **[docs/validation-log.md](docs/validation-log.md)** — 37 entries: what was run against AWS, and the eighteen defects it found in committed code
 - **[RUNNING.md](RUNNING.md)** — deploying the full stack
 - **[ADR.md](ADR.md)** — architecture decisions, and the alternatives rejected
 - **[docs/demo-runbook.md](docs/demo-runbook.md)** — the 60-minute presented session

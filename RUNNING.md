@@ -418,6 +418,7 @@ aws logs tail "$(terraform -chdir=infrastructure output -raw lambda_log_group)" 
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| `AccessDeniedException` naming a service control policy on a **brand-new account** | the account is on the AWS Free Plan, which does not cover Bedrock and carries organisation controls | upgrade to a paid plan in Billing. No IAM change, policy or Region works around an SCP ([V-37](docs/validation-log.md)) |
 | `AccessDeniedException` on converse | model access not granted in eu-west-1 | Bedrock console → Model access → enable Claude Haiku 4.5, wait for `Access granted` |
 | `Invocation with on-demand throughput isn't supported` | bare model ID — most Regions reject one | use an inference profile; the default `bedrock_model_id` is already `global.anthropic.claude-haiku-4-5-...` ([V-08](docs/validation-log.md)) |
 | `ValidationException` mentioning `guardrailProfile` | STANDARD tier without a valid profile for your Region | `terraform apply -var guardrail_tier=CLASSIC`, which needs no profile; or set `-var guardrail_profile_id=<geo>.guardrail.v1:0`. No CLI command lists these ([V-01](docs/validation-log.md)) — see [step 3](#3-confirm-the-cross-region-guardrail-profile) |

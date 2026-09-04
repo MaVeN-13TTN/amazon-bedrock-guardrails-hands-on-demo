@@ -53,6 +53,49 @@ runbook switches it deliberately.
 
 ---
 
+## Before anything else: is your account on the AWS Free Plan?
+
+**A brand-new AWS account signed up on the Free Plan cannot run this lab**, and the failure
+is not one you can fix with IAM. Bedrock is outside what the free credits cover, and AWS
+applies organisation-level controls to those accounts, so calls fail like this:
+
+```
+AccessDeniedException ... is not authorized to perform: bedrock:ListGuardrails
+with an explicit deny in a service control policy:
+arn:aws:organizations::<aws-managed-account>:policy/<org>/service_control_policy/<id>
+```
+
+This surprises people because they created the account themselves and reasonably expect it
+to be standalone. It is theirs — but `aws organizations describe-organization` returns
+`AccessDenied`, because the account is a *member* of an organisation it does not own. AWS
+re:Post carries the same report from others:
+[Bedrock has zero quotas on the Free Plan](https://repost.aws/questions/QUrHqBJPLQRqaz6OH-I8RtOg/free-plan-bedrock-has-zero-quotas)
+and [new accounts cannot access Bedrock](https://repost.aws/questions/QUGWv10XoTR_2W4yTDATaMnA/new-to-aws-problem-accessing-amazon-bedrock-service).
+
+**The fix is to move the account off the Free Plan** — Billing → add a payment method and
+upgrade to the paid plan. There is no IAM change, no policy and no Region that works
+around it, because an SCP is a ceiling above identity policy. The lab itself costs under
+$0.05 once you are on a paid plan.
+
+**Check in one command, before creating an IAM user or writing any policy:**
+
+```bash
+aws bedrock list-guardrails --region eu-west-1
+```
+
+An empty list means you are clear. A message naming a service control policy means stop —
+upgrade first. `python -m lab doctor` reports the same thing and names the SCP.
+
+**Then check quotas separately.** Permissions and quotas are different gates: a new account
+can have Bedrock quotas set near zero even after the SCP lifts. That shows up as a
+throttling or limit error rather than a denial, and is raised through Service Quotas.
+
+**This is recorded as [V-37](validation-log.md)**, observed on a second, unrelated
+organisation from the one that shaped the rest of this log — which is the point of the
+entry: two different organisations, the same class of ceiling.
+
+---
+
 ## The one distinction that matters
 
 Two failures look almost identical and need completely different fixes.

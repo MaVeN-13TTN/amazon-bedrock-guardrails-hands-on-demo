@@ -2101,3 +2101,83 @@ Organization*, and no SCP denied any Bedrock action — the failure was purely a
 grant. That is the good direction of the V-09 to V-12 trap: this time the missing grant was
 not hiding an organisation ceiling behind it. `lab doctor`'s closing note still says to
 re-run after adding the grant, because that is exactly when a hidden SCP would surface.
+
+---
+
+## V-37 · A second organisation, the same ceiling: the AWS Free Plan denies Bedrock
+
+| | |
+|---|---|
+| **utc** | 2026-09-04 |
+| **region** | eu-west-1 |
+| **provider** | n/a |
+| **command** | `aws bedrock list-guardrails --region eu-west-1`, then `python -m lab doctor --probe-write` |
+| **exit** | 254, then 1 |
+
+**observed** — a **newly created account**, opened directly at aws.amazon.com by the
+operator, with an IAM user carrying the corrected Lab_Path policy:
+
+```
+AccessDeniedException ... is not authorized to perform: bedrock:ListGuardrails
+with an explicit deny in a service control policy:
+arn:aws:organizations::<aws-managed>:policy/<org-id>/service_control_policy/<policy-id>
+```
+
+Identical text from three independent sources: the IAM console (on
+`access-analyzer:ValidatePolicy`), the AWS CLI, and boto3 through `lab doctor`. The
+management account named is not the operator's, and
+`aws organizations describe-organization` returns `AccessDenied` — the account is a
+*member* of an organisation it does not own.
+
+**the two-stage reveal, reproduced independently.** This is the most valuable part of the
+entry. Across two runs against the same account, minutes apart:
+
+| Run | IAM grant present? | What AWS said |
+|---|---|---|
+| 1 | no | `no identity-based policy allows it` |
+| 2 | yes | `DENIED BY SERVICE CONTROL POLICY` |
+
+That is exactly [V-09](#v-09--a-service-control-policy-blocks-model-invocation-outside-eu-west-1)
+to [V-12](#v-12--the-iam-grant-landed-the-scp-denies-model-invocation-regardless-of-profile):
+an absent IAM grant *hides* an SCP deny behind it, because authorisation stops at the
+identity-policy check and never reaches the resource the SCP denies. Add the grant and the
+ceiling appears, looking as though the grant caused it.
+
+Until now that finding rested on a single account's history. It has now reproduced in a
+**different account, in a different organisation, run by a different administrator** — and
+`lab doctor` predicted it in run 1's closing note before it happened:
+
+> an absent IAM grant hides any SCP deny behind it. Once the IAM permissions above are
+> added, run this again — a further SCP block may appear.
+
+[V-21](#v-21--a-prerequisite-doctor-built-from-the-misdiagnoses-above) built that warning
+from the first account's misdiagnoses. It earned its place here.
+
+**the cause, and it is not an administrator you can talk to.** The account is on the **AWS
+Free Plan**. Bedrock is outside what the free credits cover, and AWS applies
+organisation-level controls to those accounts. The operator reasonably believed the account
+was standalone, having created it themselves; it is theirs, but it is not outside an
+organisation. Others report the same:
+[Bedrock has zero quotas on the Free Plan](https://repost.aws/questions/QUrHqBJPLQRqaz6OH-I8RtOg/free-plan-bedrock-has-zero-quotas),
+[new accounts cannot access Bedrock](https://repost.aws/questions/QUGWv10XoTR_2W4yTDATaMnA/new-to-aws-problem-accessing-amazon-bedrock-service).
+
+**resolution** — upgrade the account to a paid plan. No IAM policy, no Region and no
+inference profile works around it. Documented in
+[aws-prerequisites.md](aws-prerequisites.md) as a pre-flight check ahead of creating any
+IAM user, because the cheapest possible test is one command:
+
+```bash
+aws bedrock list-guardrails --region eu-west-1
+```
+
+**quotas are a separate gate.** Even once the SCP lifts, a new account can carry Bedrock
+quotas near zero. That surfaces as a limit error rather than a denial, and is raised
+through Service Quotas — a different failure from a different layer, and worth not
+confusing with this one.
+
+**a note on what this does not impeach.** The code was reviewed for a misclassification
+before the cause was found, at the operator's request. `classify_denial` matches AWS's
+literal phrase `explicit deny in a service control policy` and infers nothing; the raw CLI,
+with no repository code in the path, returns the same string. The diagnosis was correct.
+The prompt to check it was still right — a tool that reports an organisation ceiling on an
+account the user believes they own should be doubted before it is believed.

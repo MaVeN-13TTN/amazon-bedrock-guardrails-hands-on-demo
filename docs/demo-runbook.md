@@ -493,6 +493,7 @@ one matches it.
 |---|---|---|
 | `UnrecognizedClientException` or `ExpiredToken` | expired credentials | re-authenticate (`aws sso login --profile <p>`), then `./scripts/smoke-test.sh` |
 | `AccessDeniedException` on `bedrock:InvokeModel`, no SCP named | model access or IAM grant missing | Bedrock console → **Model access**; then `python -m lab doctor` prints the policy |
+| `AccessDeniedException` naming a service control policy on a **brand-new account** | the account is on the AWS Free Plan, which does not cover Bedrock and carries organisation controls | upgrade to a paid plan in Billing. No IAM change, policy or Region works around an SCP ([V-37](validation-log.md)) |
 | `AccessDeniedException` naming **a service control policy** | organisation boundary | **cannot be fixed live.** The answer stage falls back to a canned bulletin answer and labels itself. Say so and continue — stages 1 and 3 are unaffected |
 | `AccessDeniedException` naming a Region you did not choose | a geographic inference profile fanned out | switch to the `global.` profile: `-var bedrock_model_id=global.anthropic.claude-haiku-4-5-20251001-v1:0` |
 | `ValidationException` naming the model | bare model ID that needs an inference profile | set `bedrock_model_id` to a `global.` or geographic profile — see [aws-prerequisites.md](aws-prerequisites.md) |
