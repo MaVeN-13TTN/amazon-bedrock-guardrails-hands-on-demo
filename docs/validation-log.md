@@ -1756,3 +1756,201 @@ excludes the build output.
 **still unrun, and honestly so.** No deployed measurement exists. `iam:CreateRole` is denied
 at the time of writing, so there is no endpoint to probe or time. What changed is that the
 work is no longer the blocker — the grant is.
+
+---
+
+## V-31 · A masked prompt was refused whenever another policy reported `NONE`
+
+| | |
+|---|---|
+| **utc** | 2026-09-04 |
+| **region** | n/a — found offline, against the committed fixtures |
+| **provider** | n/a |
+| **command** | `pytest backend/tests/test_shipped_fixtures.py` |
+| **exit** | 1 |
+
+**observed** — the committed Replay_Mode fixture for the second PII case replays as a
+block, not a mask:
+
+```
+prompt     : My national ID is 24518803, please check my membership status.
+stopped_at : screen
+stages     : ['screen']
+final      : I can't help with that one. For anything involving chemical doses, land …
+```
+
+The screen stage recorded exactly what [V-23](#v-23--a-national-id-and-a-phone-number-in-one-prompt-both-masked-name-reported-none)
+celebrates: `National ID → ANONYMIZED`, with `PHONE → NONE` and `NAME → NONE` alongside it.
+The request should have continued with the ID replaced.
+
+**the defect**, in `backend/app/main.py`:
+
+```python
+masked_only = screened.intervened and bool(screened.hits) and all(
+    hit.action == "ANONYMIZED" for hit in screened.hits if hit.action
+)
+```
+
+`hit.action` is the **string** `"NONE"` for a policy that looked and allowed, and a
+non-empty string is truthy. So `if hit.action` keeps those findings, each one fails
+`== "ANONYMIZED"`, `masked_only` collapses to `False`, and the request is refused as
+though a topic had blocked it.
+
+The filter was meant to skip findings with no action. It skips only `None` and `""`,
+neither of which this parser ever produces — `_DROP_NONE_ACTION` drops `NONE` for content
+and topic policies but deliberately **keeps** it for PII, because a PII rule that looked
+is worth showing. The two decisions are individually correct and jointly wrong.
+
+The blast radius is the interesting part: `outputScope=FULL` is enabled precisely so the
+Background_View can show which policies considered a request, so `NONE` findings are
+present on essentially every call. **Any masked prompt not masked by every reporting
+policy was refused.** The first PII case survived only because all three of its findings
+happened to be `ANONYMIZED`.
+
+**fixed** — judge only the findings that did something:
+
+```python
+acted = [hit for hit in screened.hits if hit.action and hit.action != "NONE"]
+masked_only = screened.intervened and bool(acted) and all(
+    hit.action == "ANONYMIZED" for hit in acted
+)
+```
+
+Pinned in both directions by `test_a_masked_prompt_continues_even_when_other_policies_report_none`
+and `test_a_genuine_block_still_halts_when_a_policy_also_reports_none`. The first fails
+against the old expression and passes against the new.
+
+**affects** — this is [V-15](#v-15--the-guardrail-behaves-as-configured--first-live-measurements)
+returning by a different door, and the third defect this repository has produced from the
+same ambiguity (V-15 the pipeline, V-27 the metric, V-31 the pipeline again). Masking and
+blocking are both `GUARDRAIL_INTERVENED`, and every place that distinguishes them has had
+to be corrected at least once.
+
+---
+
+## V-32 · The masking segment replayed as a refusal, and nothing tested what shipped
+
+| | |
+|---|---|
+| **utc** | 2026-09-04 |
+| **region** | n/a — found offline, against the committed fixtures |
+| **provider** | n/a |
+| **command** | `./scripts/replay-check.sh` |
+| **exit** | 0 |
+
+**observed** — the demo's headline case, the one
+[demo-runbook.md](demo-runbook.md) marks *never cut*:
+
+```
+masked (must continue):
+  stages ['screen', 'answer', 'verify'] | stopped verify | any model: False
+  final: I started to answer that but the response didn't meet our member-safety …
+```
+
+The runbook tells the presenter to read out "the assistant's answer about payment timing"
+and then say *"Nothing unusual happened."* What Replay_Mode actually shows is a refusal.
+
+**the chain.** `bedrock:InvokeModel` is denied in this account ([V-12](#v-12--the-iam-grant-landed-the-scp-denies-model-invocation-regardless-of-profile)),
+so the answer stage substituted a canned bulletin answer. The prompt *"…Has my payment gone
+out?"* matched the `"payment"` keyword and got back *"Payment for delivered produce is
+released fourteen days after grading is complete."* Stage 3 then scored that answer
+**grounding 0.99, relevance 0.07** and blocked it.
+
+**the guardrail was right.** A generic policy statement does not answer *"has my payment
+gone out"* — that is a per-member status lookup, and no bulletin-grounded answer can be
+relevant to it. `main.py` passes the **original** question to verify, so the mismatch is
+real and would recur with a live model: the honest model answer ("I can't see individual
+payment records…") is not in the bulletin either, and risks grounding instead.
+
+**fixed by changing the question, not the threshold.** The masking segment now uses
+*"…How long after grading do I get paid?"* — the phrasing already carried by the `in_scope`
+set, which passes all three stages. The three PII values and everything the segment teaches
+are unchanged; only the clause the assistant is asked to answer is. Asking an assistant a
+question its source cannot answer was the defect.
+
+Keeping the old prompt would also have been defensible as a *different* lesson — a guardrail
+does not know who the member is or what they may see, which `README.md` already lists as
+limit one. It is not this segment's lesson, and one segment cannot carry both.
+
+**why nothing caught it.** Every test in the suite builds its own synthetic fixtures. Not
+one of them read `backend/app/fixtures/replay/`, so the committed recordings — the thing a
+presenter actually falls back to — were the least-tested artefact in the repository.
+`backend/tests/test_shipped_fixtures.py` now drives every declared case through the real
+pipeline in Replay_Mode and asserts on the response, **not** on the fixture's stored
+`stopped_at`: that field read `None` for this case while the pipeline derived `verify` from
+the recorded stages, so a test trusting it would have passed over a visibly broken demo.
+
+**affects** — `docs/demo-runbook.md` segment 4, `README.md`'s masking example,
+`docs/lab-guide.md` module 5, `lab/cases.json`, `lab/checkpoints.json`,
+`frontend/src/lib/samples.ts` and `scripts/replay-check.sh`, all updated. The measured
+records in `results/` and entries V-15, V-23 and V-25 keep the old prompt, because they
+record what was run on 2026-08-22 and this log does not rewrite history.
+
+**still outstanding.** `backend/app/fixtures/replay/pii-classic.json` is keyed to the old
+prompt and must be re-recorded against a live guardrail:
+
+```bash
+python -m lab conformance --record --set pii
+```
+
+Until then `test_every_committed_fixture_is_still_a_declared_case` fails by design, and
+Replay_Mode answers the new prompt with a 409. That is a **skip, not a pass**, and it is
+reported as such.
+
+---
+
+## V-33 · The V-30 lint exclusion was written into a file ruff never consults
+
+| | |
+|---|---|
+| **utc** | 2026-09-04 |
+| **region** | n/a |
+| **provider** | n/a |
+| **command** | `./scripts/verify-install.sh` after `./scripts/package-backend.sh` |
+| **exit** | 1 |
+
+**observed**
+
+```
+  [ FAIL ] ruff lint
+           Found 7065 errors. [*] 3343 fixable with the `--fix` option
+```
+
+[V-30](#v-30--tasks-26-to-28-built-to-run-unattended-a-probe-that-lied-twice) records this
+trap as found and fixed: `ruff` was scanning `backend/build`, the Lambda bundle of vendored
+third-party code, and `pyproject.toml` now excludes the build output. The exclusion was
+added to the **repository-root** `pyproject.toml`:
+
+```toml
+extend-exclude = ["backend/build", "backend/dist", "backend/app/fixtures"]
+```
+
+**ruff never reads that setting for these files.** Configuration is resolved per file from
+the nearest `pyproject.toml`, and `backend/pyproject.toml` exists, so it governs everything
+under `backend/` — and it carried no `extend-exclude` at all. Confirmed by asking ruff which
+configuration it used:
+
+```
+$ ruff check --show-settings backend/build/fastapi/__init__.py | grep cache_dir
+cache_dir = ".../backend/.ruff_cache"
+```
+
+The root cache directory would be `.ruff_cache`; `backend/.ruff_cache` names the config in
+force.
+
+**why it stayed invisible for two weeks.** `backend/build/` only exists on a machine that
+has run `scripts/package-backend.sh`, which `terraform apply` does. V-30's verification ran
+on a tree where the directory had been cleaned, so the fix appeared to work. The first run
+after a fresh `package-backend.sh` reproduced the original symptom exactly.
+
+**fixed** — `backend/pyproject.toml` now carries `extend-exclude = ["build", "dist",
+"app/fixtures"]`, and the root file keeps its copy for anyone invoking ruff on a path that
+resolves there. `backend/tests/test_repo_config.py` asserts both, so the next person to add
+a `pyproject.toml` under a subdirectory is told what it silently takes over.
+
+**the generalisation.** A fix verified only under the condition that hides the bug is not
+verified. V-30 checked that lint was clean; it did not check that lint was clean *with the
+bundle present*, which is the only state in which the defect exists.
+
+**affects** — [V-30](#v-30--tasks-26-to-28-built-to-run-unattended-a-probe-that-lied-twice),
+whose closing claim about `pyproject.toml` is superseded here.
