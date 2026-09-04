@@ -27,7 +27,7 @@ export const PROMPT_GROUPS: { label: string; prompts: string[] }[] = [
   {
     label: "PII",
     prompts: [
-      "I am Grace Wanjiku, member HG-004182, my number is 0722135790. Has my payment gone out?",
+      "I am Grace Wanjiku, member HG-004182, my number is 0722135790. How long after grading do I get paid?",
     ],
   },
   {

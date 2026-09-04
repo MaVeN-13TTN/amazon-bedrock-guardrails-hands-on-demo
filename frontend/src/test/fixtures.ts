@@ -53,7 +53,7 @@ export const MASKED: AskResponse = {
   stages: [
     stage({
       stage: "screen",
-      text: "I am {NAME}, member {UUID}, my number is {PHONE}. Has my payment gone out?",
+      text: "I am {NAME}, member {UUID}, my number is {PHONE}. How long after grading do I get paid?",
       hits: [
         {
           policy: "PII",

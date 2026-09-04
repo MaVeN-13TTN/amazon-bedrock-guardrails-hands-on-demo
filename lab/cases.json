@@ -80,7 +80,7 @@
     "note": "Watch the returned text, not just the verdict: the values are replaced in place. This is data minimisation at the boundary. Classified in-scope: the member is asking a legitimate question and the request continues — masking is not blocking.",
     "cases": [
       {
-        "prompt": "I am Grace Wanjiku, member HG-004182, my number is 0722135790. Has my payment gone out?"
+        "prompt": "I am Grace Wanjiku, member HG-004182, my number is 0722135790. How long after grading do I get paid?"
       },
       {
         "prompt": "My national ID is 24518803, please check my membership status."

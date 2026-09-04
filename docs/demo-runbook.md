@@ -215,7 +215,7 @@ two distinct movements and pause between them.
 
 **Movement one — Chat_Window only.** Submit the **PII** group prompt:
 
-> I am Grace Wanjiku, member HG-004182, my number is 0722135790. Has my payment gone out?
+> I am Grace Wanjiku, member HG-004182, my number is 0722135790. How long after grading do I get paid?
 
 **Elements read aloud** — Chat_Window: the member's message, and the assistant's answer
 about payment timing.
@@ -233,7 +233,7 @@ Then say, and stop talking for a moment:
 `PII regex · Co-op Member Number · ANONYMIZED`, and the *text passed on* line:
 
 ```
-I am {NAME}, member {Co-op Member Number}, my number is {PHONE}. Has my payment gone out?
+I am {NAME}, member {Co-op Member Number}, my number is {PHONE}. How long after grading do I get paid?
 ```
 
 **What the member could not see:** that their name, phone number and member number were

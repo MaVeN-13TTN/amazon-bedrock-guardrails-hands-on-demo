@@ -66,7 +66,7 @@ function stage(name: string, over: Record<string, unknown> = {}) {
 const MASKED = {
   stages: [
     stage("screen", {
-      text: "I am {NAME}, member {UUID}, my number is {PHONE}. Has my payment gone out?",
+      text: "I am {NAME}, member {UUID}, my number is {PHONE}. How long after grading do I get paid?",
       hits: [
         { policy: "PII", detail: "NAME", action: "ANONYMIZED", where: "input", score: null, threshold: null, passed: null },
         { policy: "PII", detail: "PHONE", action: "ANONYMIZED", where: "input", score: null, threshold: null, passed: null },

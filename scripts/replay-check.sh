@@ -33,6 +33,6 @@ print("  final:", d["final"][:72])'
 }
 
 echo "in scope (three stages):";  probe "When are the collection points open?"
-echo "masked (must continue):";   probe "I am Grace Wanjiku, member HG-004182, my number is 0722135790. Has my payment gone out?"
+echo "masked (must continue):";   probe "I am Grace Wanjiku, member HG-004182, my number is 0722135790. How long after grading do I get paid?"
 echo "blocked (stops at screen):"; probe "How many millilitres of fungicide do I put in a 20 litre knapsack?"
 echo "unrecorded (409):";         probe "a prompt nobody ever recorded"
