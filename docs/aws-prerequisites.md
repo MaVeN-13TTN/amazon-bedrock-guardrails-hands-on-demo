@@ -116,13 +116,18 @@ from here:
         "bedrock:CreateGuardrailVersion",
         "bedrock:UpdateGuardrail",
         "bedrock:DeleteGuardrail",
-        "bedrock:GetGuardrail",
-        "bedrock:ListGuardrails"
+        "bedrock:GetGuardrail"
       ],
       "Resource": [
         "arn:aws:bedrock:REGION:ACCOUNT:guardrail/*",
         "arn:aws:bedrock:REGION:ACCOUNT:guardrail-profile/*"
       ]
+    },
+    {
+      "Sid": "ListGuardrails",
+      "Effect": "Allow",
+      "Action": "bedrock:ListGuardrails",
+      "Resource": "*"
     },
     {
       "Sid": "GuardrailTags",
@@ -147,7 +152,17 @@ from here:
 }
 ```
 
-Two details that are easy to get wrong:
+Three details that are easy to get wrong:
+
+**`ListGuardrails` must be granted on `"*"`.** It enumerates a collection, so it has no
+resource type and cannot be scoped to a guardrail ARN. Put it in the lifecycle statement
+above and it authorises nothing — and the denial reads `no identity-based policy allows
+it`, which is indistinguishable from having left the action out. `lab doctor` reports this
+one precisely because it is invisible by inspection ([V-36](validation-log.md)).
+
+`ListTagsForResource` is the counter-example: it reads one named resource, so it stays
+scoped to the guardrail ARN. The test is whether the action enumerates a collection or
+acts on a single object.
 
 **The guardrail-profile ARN in `GuardrailLifecycle`.** Creating a guardrail that names
 a profile requires permission on the *profile* as well as the guardrail. AWS documents

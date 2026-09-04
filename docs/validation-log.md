@@ -2038,3 +2038,66 @@ query for the `/aws/apigateway/` prefix.
 [V-33](#v-33--the-v-30-lint-exclusion-was-written-into-a-file-ruff-never-consults): a check
 written so that it cannot observe the thing it is supposed to check. A verification list
 that greps one prefix will always pass for resources under another.
+
+---
+
+## V-36 · `bedrock:ListGuardrails` scoped to an ARN authorises nothing
+
+| | |
+|---|---|
+| **utc** | 2026-09-04 |
+| **region** | eu-west-1 |
+| **provider** | n/a |
+| **command** | `python -m lab doctor` against a fresh account with the documented policy attached |
+| **exit** | 1 |
+
+**observed** — a new standalone-looking account, IAM user `kilimo-user`, with the policy
+from `docs/aws-prerequisites.md` (and from `python -m lab policy`) attached:
+
+```
+[  ok  ] credentials
+           account 856447616156 as kilimo-user
+[ FAIL ] bedrock:ListGuardrails
+           no identity-based policy allows it (resource: n/a)
+```
+
+The policy visibly contained `bedrock:ListGuardrails`. It was scoped, alongside the other
+lifecycle actions, to:
+
+```
+arn:aws:bedrock:REGION:ACCOUNT:guardrail/*
+arn:aws:bedrock:REGION:ACCOUNT:guardrail-profile/*
+```
+
+**`ListGuardrails` enumerates a collection, so it has no resource type.** An ARN-scoped
+grant can never match it; the action is only authorised against `"*"`. The statement was
+inert, and the denial AWS returns for a mis-scoped action is the same one it returns for a
+missing action — `no identity-based policy allows it`. Reading the policy does not reveal
+the defect, because the action is right there in the list.
+
+`lab doctor` already printed the correct fix, having been written against a real failure:
+
+```json
+{ "Sid": "KilimoDeskGuardrail", "Effect": "Allow",
+  "Action": ["bedrock:ListGuardrails"], "Resource": "*" }
+```
+
+so the diagnostic was right while the policy it was diagnosing was wrong.
+
+**the counter-example matters.** Not every `List*` action wants `"*"`.
+`ListTagsForResource` reads one named resource and is correctly scoped to the guardrail
+ARN — [V-13](#v-13--the-guardrail-applies-two-tag-permissions-are-missing) observed it both
+working and failing that way. The distinction is whether the action enumerates a collection
+or acts on a single object, and a blanket rule in either direction is wrong. A first
+attempt at a regression test asserted "no `List*` under an ARN scope" and immediately
+failed on `ListTagsForResource`; the committed test pins both directions instead.
+
+**fixed** — `lab/policy.py` emits `ListGuardrails` as its own `"Resource": "*"` statement,
+`docs/aws-prerequisites.md` matches, and `lab/tests/test_policy.py` pins the rule and its
+counter-example.
+
+**also observed, and not a defect.** The same run reported the account as *inside an AWS
+Organization*, and no SCP denied any Bedrock action — the failure was purely an identity
+grant. That is the good direction of the V-09 to V-12 trap: this time the missing grant was
+not hiding an organisation ceiling behind it. `lab doctor`'s closing note still says to
+re-run after adding the grant, because that is exactly when a hidden SCP would surface.

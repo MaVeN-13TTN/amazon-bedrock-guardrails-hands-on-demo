@@ -43,9 +43,20 @@ def lab_policy(region: str, account: str, partition: str) -> dict:
                     "bedrock:UpdateGuardrail",
                     "bedrock:DeleteGuardrail",
                     "bedrock:GetGuardrail",
-                    "bedrock:ListGuardrails",
                 ],
                 "Resource": [guardrail, profile],
+            },
+            {
+                # ListGuardrails is account-wide: it has no resource type, so it
+                # can only be authorised against "*". Scoping it to a guardrail
+                # ARN alongside the lifecycle actions above authorises nothing,
+                # and the denial reads "no identity-based policy allows it" —
+                # indistinguishable from having forgotten the action entirely.
+                # `lab doctor` prints exactly this statement as its fix. V-36.
+                "Sid": "ListGuardrails",
+                "Effect": "Allow",
+                "Action": ["bedrock:ListGuardrails"],
+                "Resource": "*",
             },
             {
                 # Terraform tags what it manages and reads tags back when it

@@ -67,7 +67,7 @@ loud. A bad chemical dose harms a crop, an animal, or a person.
 - **[docs/lab-guide.md](docs/lab-guide.md)** — the eight-module self-paced lab
 - **[docs/results.md](docs/results.md)** — every measurement, with its record set
 - **[docs/cost.md](docs/cost.md)** — what it costs, and how that is derived
-- **[docs/validation-log.md](docs/validation-log.md)** — 35 entries: what was run against AWS, and the seventeen defects it found in committed code
+- **[docs/validation-log.md](docs/validation-log.md)** — 36 entries: what was run against AWS, and the eighteen defects it found in committed code
 - **[RUNNING.md](RUNNING.md)** — deploying the full stack
 - **[ADR.md](ADR.md)** — architecture decisions, and the alternatives rejected
 - **[docs/demo-runbook.md](docs/demo-runbook.md)** — the 60-minute presented session

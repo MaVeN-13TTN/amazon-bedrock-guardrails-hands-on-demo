@@ -113,3 +113,39 @@ def test_apply_guardrail_permits_the_profile_in_every_destination_region():
 
     profile = next(r for r in apply_stmt["Resource"] if "guardrail-profile" in r)
     assert profile == "arn:aws:bedrock:*:111122223333:guardrail-profile/*"
+
+
+def test_list_guardrails_is_authorised_against_a_wildcard_resource():
+    """ListGuardrails has no resource type, so an ARN-scoped grant authorises nothing.
+
+    Scoping it alongside the lifecycle actions produced "no identity-based policy
+    allows it" against a policy that visibly contained the action — which reads
+    as a missing grant rather than a mis-scoped one (V-36).
+    """
+    doc = lab_policy("eu-west-1", "856447616156", "aws")
+
+    for stmt in doc["Statement"]:
+        if "bedrock:ListGuardrails" in stmt["Action"]:
+            assert stmt["Resource"] == "*", (
+                "ListGuardrails must be granted on \"*\"; it cannot be scoped to "
+                f"an ARN, but this statement uses {stmt['Resource']!r}"
+            )
+            break
+    else:
+        raise AssertionError("no statement grants bedrock:ListGuardrails")
+
+
+def test_list_tags_for_resource_stays_scoped_to_the_guardrail():
+    """The counter-example, so the fix above is not over-applied.
+
+    Not every List* action needs "*". ListTagsForResource acts *on* a named
+    resource and is correctly scoped to the guardrail ARN — V-13 observed it
+    working that way, and failing that way when the permission was absent. The
+    distinction is whether the action enumerates a collection or reads one
+    object.
+    """
+    doc = lab_policy("eu-west-1", "856447616156", "aws")
+    tags = next(s for s in doc["Statement"] if s["Sid"] == "GuardrailTags")
+
+    assert "bedrock:ListTagsForResource" in tags["Action"]
+    assert tags["Resource"].endswith(":guardrail/*")
