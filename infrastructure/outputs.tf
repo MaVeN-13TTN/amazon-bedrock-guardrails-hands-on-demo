@@ -56,6 +56,10 @@ output "local_env_file" {
     "GUARDRAIL_ID=${aws_bedrock_guardrail.main.guardrail_id}",
     "GUARDRAIL_VERSION=${var.publish_guardrail_version ? aws_bedrock_guardrail_version.main[0].version : "DRAFT"}",
     "GUARDRAIL_ENABLED=true",
+    # Without this, a presenter who applied STANDARD, recorded fixtures and then
+    # fell back to Replay_Mode would replay the CLASSIC tier-gap result — showing
+    # the Swahili attack sailing through while the slide says STANDARD.
+    "GUARDRAIL_TIER=${var.guardrail_tier}",
     "CORS_ALLOW_ORIGINS=http://localhost:3000",
   ])
 }

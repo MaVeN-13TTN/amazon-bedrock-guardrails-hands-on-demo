@@ -1954,3 +1954,87 @@ bundle present*, which is the only state in which the defect exists.
 
 **affects** — [V-30](#v-30--tasks-26-to-28-built-to-run-unattended-a-probe-that-lied-twice),
 whose closing claim about `pyproject.toml` is superseded here.
+
+---
+
+## V-34 · A STANDARD stack described itself as CLASSIC: GUARDRAIL_TIER was never set
+
+| | |
+|---|---|
+| **utc** | 2026-09-04 |
+| **region** | n/a — found by reading the configuration against the application |
+| **provider** | n/a |
+| **command** | comparison of `Settings` fields against `aws_lambda_function.api` environment |
+| **exit** | n/a |
+
+**observed** — `backend/app/config.py` carried this comment:
+
+> Which tier's fixtures to prefer where a prompt is recorded under both. Also the tier
+> the application reports; **Terraform sets it from `guardrail_tier`.**
+
+Terraform did not. The Lambda's environment block set `BEDROCK_MODEL_ID`, `GUARDRAIL_ID`,
+`GUARDRAIL_VERSION`, `GUARDRAIL_ENABLED`, `CORS_ALLOW_ORIGINS`, `LOG_LEVEL` and
+`SCENARIO_PATH` — and no `GUARDRAIL_TIER`. The `local_env_file` output omitted it too. So
+the setting fell to its default of `CLASSIC` in both places, while `var.guardrail_tier`
+defaults to **STANDARD**.
+
+**consequences, in increasing order of how badly they read on stage.** The value is used
+in one place, `GuardrailService.__init__`, to choose which tier's fixtures a prompt
+resolves to when it was recorded under both. In a deployed Lambda replay is off, so the
+field is inert and the defect is cosmetic.
+
+It is not cosmetic locally. The tier-gap prompt is deliberately recorded under **both**
+tiers, and `ReplayStore._insert` prefers the case matching the configured tier. A presenter
+who applies STANDARD, records fixtures with `lab conformance --record`, then falls back to
+Replay_Mode when their credentials expire, gets `GUARDRAIL_TIER=CLASSIC` from
+`local_env_file` — and replays the **CLASSIC** tier-gap result. The Swahili prompt attack
+sails through, on a slide that says STANDARD, in the segment whose entire purpose is to
+show the difference between the two.
+
+**fixed** — `infrastructure/lambda.tf` sets `GUARDRAIL_TIER = var.guardrail_tier` on the
+function, and `local_env_file` emits the same line. The comment in `config.py` is now true.
+
+**affects** — this is [V-24](#v-24--boto3-137x-silently-drops-tier-from-the-getguardrail-response)
+from the other direction. There, AWS sent the tier and the SDK dropped it; here, nothing
+sent it at all. Both produce a measurement or a demonstration labelled with the wrong tier,
+and neither raises anything.
+
+---
+
+## V-35 · The manual teardown named two alarms that do not exist, and missed a log group
+
+| | |
+|---|---|
+| **utc** | 2026-09-04 |
+| **region** | n/a — found by reading `RUNNING.md` against `infrastructure/*.tf` |
+| **provider** | n/a |
+| **command** | comparison of documented teardown commands against declared resource names |
+| **exit** | n/a |
+
+**observed** — the "If the Terraform state is lost" section, which is the path someone
+uses precisely when things have gone wrong:
+
+```bash
+aws cloudwatch delete-alarms --alarm-names kilimo-desk-api-errors kilimo-desk-api-throttles
+```
+
+`observability.tf` declares `${local.name}-lambda-errors` and `${local.name}-lambda-throttles`
+— that is `kilimo-desk-lambda-errors` and `kilimo-desk-lambda-throttles`. The documented
+names match nothing.
+
+**`delete-alarms` does not fail on a name that does not exist.** It returns success. So the
+command reports a clean teardown while both alarms remain in the account.
+
+**and a whole resource was missing.** The manual sequence deleted
+`/aws/lambda/kilimo-desk-api` but never `/aws/apigateway/kilimo-desk`, the API Gateway
+access-log group declared in the same file. The verification block that follows — "All six
+should return 0" — checked only the `/aws/lambda/` prefix, so the orphan passed the check
+that exists to catch orphans.
+
+**fixed** — correct alarm names, the second `delete-log-group`, and a seventh verification
+query for the `/aws/apigateway/` prefix.
+
+**the generalisation.** Both errors are of the same kind as
+[V-33](#v-33--the-v-30-lint-exclusion-was-written-into-a-file-ruff-never-consults): a check
+written so that it cannot observe the thing it is supposed to check. A verification list
+that greps one prefix will always pass for resources under another.

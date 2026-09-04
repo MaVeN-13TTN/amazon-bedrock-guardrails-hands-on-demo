@@ -60,8 +60,11 @@ class Settings(BaseSettings):
     replay_mode: bool = False
     replay_dir: str = ""
 
-    # Which tier's fixtures to prefer where a prompt is recorded under both. Also
-    # the tier the application reports; Terraform sets it from `guardrail_tier`.
+    # Which tier's fixtures to prefer where a prompt is recorded under both, and
+    # the tier the application reports. Terraform sets GUARDRAIL_TIER on the
+    # Lambda and in the `local_env_file` output, both from its own
+    # `guardrail_tier` variable — it did not until V-34, so a STANDARD stack
+    # described itself as CLASSIC and preferred the wrong tier's fixtures.
     guardrail_tier: str = "CLASSIC"
 
     @property

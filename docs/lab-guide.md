@@ -852,7 +852,7 @@ aws bedrock list-guardrails --region $AWS_REGION \
 ## Where to go next
 
 - [results.md](results.md) — every measurement, with its record set
-- [validation-log.md](validation-log.md) — 33 entries, including fifteen defects found in
+- [validation-log.md](validation-log.md) — 35 entries, including seventeen defects found in
   this repository's own code
 - [../ADR.md](../ADR.md) — the architectural decisions and their rejected alternatives
 - [demo-runbook.md](demo-runbook.md) — the 60-minute presented version

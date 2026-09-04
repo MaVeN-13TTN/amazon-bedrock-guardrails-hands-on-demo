@@ -466,11 +466,13 @@ aws bedrock list-guardrails --region $AWS_REGION --query 'length(guardrails)'
 aws lambda list-functions --region $AWS_REGION --query "length(Functions[?starts_with(FunctionName,'kilimo-desk')])"
 aws apigatewayv2 get-apis --region $AWS_REGION --query "length(Items[?starts_with(Name,'kilimo-desk')])"
 aws amplify list-apps --region $AWS_REGION --query "length(apps[?starts_with(name,'kilimo-desk')])"
+# Two log groups, not one: the API Gateway access log is easy to leave behind.
 aws logs describe-log-groups --region $AWS_REGION --log-group-name-prefix /aws/lambda/kilimo-desk --query 'length(logGroups)'
+aws logs describe-log-groups --region $AWS_REGION --log-group-name-prefix /aws/apigateway/kilimo-desk --query 'length(logGroups)'
 aws cloudwatch describe-alarms --region $AWS_REGION --alarm-name-prefix kilimo-desk --query 'length(MetricAlarms)'
 ```
 
-All six should return `0`.
+All seven should return `0`.
 
 **What persists, and costs nothing:**
 
@@ -505,7 +507,12 @@ aws iam delete-role-policy --role-name kilimo-desk-lambda --policy-name kilimo-d
 aws iam delete-role --role-name kilimo-desk-lambda
 
 aws logs delete-log-group --log-group-name /aws/lambda/kilimo-desk-api --region $AWS_REGION
-aws cloudwatch delete-alarms --alarm-names kilimo-desk-api-errors kilimo-desk-api-throttles --region $AWS_REGION
+aws logs delete-log-group --log-group-name /aws/apigateway/kilimo-desk --region $AWS_REGION
+
+# The alarms are named for the resource they watch, which is the Lambda. Passing a
+# name that does not exist is not an error — delete-alarms succeeds silently, so a
+# wrong name here reads as a successful teardown while both alarms remain.
+aws cloudwatch delete-alarms --alarm-names kilimo-desk-lambda-errors kilimo-desk-lambda-throttles --region $AWS_REGION
 ```
 
 Only the guardrail carries an ongoing charge, and only when evaluations are made — see

@@ -65,6 +65,13 @@ resource "aws_lambda_function" "api" {
       GUARDRAIL_VERSION = var.publish_guardrail_version ? aws_bedrock_guardrail_version.main[0].version : "DRAFT"
       GUARDRAIL_ENABLED = "true"
 
+      # The tier the application reports and, under Replay_Mode, the tier whose
+      # fixtures it prefers. config.py defaults this to CLASSIC and its comment
+      # claimed Terraform set it — which nothing did, so a STANDARD deployment
+      # (the default) described itself as CLASSIC. That is the V-24 mislabelling
+      # from the other direction.
+      GUARDRAIL_TIER = var.guardrail_tier
+
       CORS_ALLOW_ORIGINS = join(",", local.cors_origins)
       LOG_LEVEL          = "INFO"
       SCENARIO_PATH      = "/var/task/scenario.json"
