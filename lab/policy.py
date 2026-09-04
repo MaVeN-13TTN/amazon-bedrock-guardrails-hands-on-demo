@@ -127,9 +127,17 @@ def render(region: str, *, deploy: bool = False, session=None) -> str:
     if resolved:
         out.append(f"# Account {account}, Region {region} — ready to paste.\n")
     else:
+        # Deliberately does not name one re-authentication command. This runs
+        # before anyone has working credentials, and which command applies
+        # depends on how the profile is configured: `aws login` for a browser
+        # session, `aws sso login --profile <p>` for Identity Center, or
+        # `aws configure` for static keys. Naming the wrong one sends the reader
+        # down a path their profile does not use.
         out.append(
             f"# Could not resolve your account id, so {PLACEHOLDER_ACCOUNT} is left in\n"
-            f"# place below. Replace it, or run `aws sso login` and try again.\n"
+            f"# place below. Replace it with your 12-digit account id — it is shown\n"
+            f"# top-right in the console — or authenticate and run this again:\n"
+            f"#   aws sts get-caller-identity   # must return an account first\n"
         )
 
     out.append("# Lab_Path — one guardrail, ApplyGuardrail, no model access needed.")
